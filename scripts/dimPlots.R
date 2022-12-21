@@ -1,10 +1,10 @@
-BASEPTFONTSIZE <- 8
-BASEFONTSIZE <- BASEPTFONTSIZE / ggplot2:::.pt
-
+source("scripts/generic.R")
 
 minimalDimPlotTheme <- theme(
   legend.position = "bottom",
   legend.text = element_text(size = BASEPTFONTSIZE),
+  legend.direction = "horizontal",
+  legend.justification = "center",
   legend.title = element_blank(),
   axis.title = element_blank(),
   axis.text = element_text(size = BASEPTFONTSIZE),
@@ -16,10 +16,11 @@ minimalDimPlotTheme <- theme(
 
 DimPlotCustom <- function(
   seu,
-  reduction = "wnn.umap",
+  reduction = "rna.umap",
   groupBy,
   groupByTitles = groupBy,
   minimalTheme = TRUE,
+  nLegendCols = 5,
   nCols = length(groupBy) %/% 2
 ) {
   if (!(is.vector(groupBy) && is.atomic(groupBy))) {
@@ -29,9 +30,10 @@ DimPlotCustom <- function(
   names(groupByTitles) <- groupBy
   
   listP <- lapply(groupBy, function(x) {
-    p <- DimPlot(seu, reduction = 'wnn.umap', group.by = x) +
+    p <- DimPlot(seu, reduction = reduction, group.by = x) +
       labs(title = groupByTitles[x]) +
-      minimalDimPlotTheme
+      minimalDimPlotTheme +
+      guides(color = guide_legend(ncol = nLegendCols))
     
     return(p)
   })
@@ -39,9 +41,57 @@ DimPlotCustom <- function(
   return(wrap_plots(full = listP, ncol = nCols))
 }
 
+smallMultipleUmaps <- function(
+  seu,
+  parameter,
+  umapReduction = "rna.umap",
+  raster = TRUE,
+  devices = c("png"),
+  filename = paste0("smallMultipleUmap_", parameter),
+  height = 6,
+  width = 10,
+  ncol = 8,
+  titleWrapNChars = 20
+) {
+  
+  colOfInterest <- FetchData(seu, parameter)
+  uniqVals <- str_sort(unique(colOfInterest[, parameter]), numeric = TRUE)
+  
+  smallUmaps <- lapply(uniqVals, function(x) {
+    message(paste0("Generating small plot for: ", x))
+    
+    Idents(seu) <- parameter
+    cellsOfInterest <- rownames(colOfInterest)[colOfInterest[, parameter] == x]
+    
+    p <- DimPlot(
+      seu,
+      raster = TRUE,
+      cells.highlight = cellsOfInterest,
+      reduction = umapReduction) +
+      labs(title = stringr::str_wrap(x, titleWrapNChars)) +
+      theme(
+        legend.position = "none",
+        axis.text = element_text(size = BASEPTFONTSIZE - 3),
+        axis.title = element_blank(),
+        plot.title = element_text(size = BASEPTFONTSIZE - 3)
+      )
+    
+    return(p)
+  })
+  
+  savePlot(
+    smallUmaps,
+    fn = filename,
+    customSavePlot = patchwork::wrap_plots(smallUmaps, ncol = ncol),
+    devices = devices,
+    gheight = height,
+    gwidth = width)
+}
+
+
 FeaturePlotCustom <- function(
   seu,
-  reduction = "wnn.umap",
+  reduction = "rna.umap",
   markers,
   modality,
   graphsPerRow = 6,
