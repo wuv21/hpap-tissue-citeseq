@@ -1,6 +1,12 @@
 BASEPTFONTSIZE <- 8
 BASEFONTSIZE <- BASEPTFONTSIZE / ggplot2:::.pt
 
+DISEASESTATUSCOLORS <- c(
+  "ND" = "#1b9e77",
+  "AAb+" = "#7570b3",
+  "T1D" = "#d95f02"
+)
+
 
 rdsCheckAndRun <- function(fn, f, ...) {
   if (!file.exists(fn)) {
@@ -23,7 +29,7 @@ savePlot <- function(
   plot,
   fn,
   parentOutDir = "outs",
-  devices,
+  devices = c("rds", "png"),
   gheight,
   gwidth,
   rdsPlot = NULL,

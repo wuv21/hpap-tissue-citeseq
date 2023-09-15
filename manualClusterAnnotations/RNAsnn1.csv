@@ -1,34 +1,32 @@
-1,B transitional/IgM+ memory
-2,B naive #1
+1,B naive #1
+2,B IgM+ memory/marginal zone like #1
 3,B class-switched memory #1
 4,B IgM+ memory #2
-5,B naive #2
-6,CD4 naive #2
-7,B naive #3
+5,CD4 naive #2
+6,B naive #3
+7,B IgM+ memory #3
 8,CD4 naive #1
-9,CD4 Trm/activated
-10,B IgM+ memory #3
-11,CD8 naive #2
+9,CD4 Tcm/Tem
+10,CD8 naive #2
+11,CD4 Tcm/Treg
 12,Monocyte #1
-13,CD4 Treg
-14,B IgM+ memory/marginal zone like
-15,CD8 Tem/Trm
-16,CD4 Tem/Trm
-17,CD8 Tem/Temra
-18,CD8 naive #1
-19,NK cytotoxic
-20,B class-switched memory #2
-21,NK CD56bright
-22,CD8 Treg/gdT/Helios+
-23,B T-bet+/ABCs
-24,
-25,ILC3/NK
-26,Splenic innate mix
-27,Monocyte #3
+13,B naive #2
+14,CD4 Tem/activated
+15,NK
+16,CD8 Tem/Temra
+17,CD8 naive #1
+18,B IgM+ memory/marginal zone like #2 
+19,B class-switched memory #2
+20,CD8 Tem/Trm #1
+21,CD8 gdT/Helios+
+22,CD8 Tem/Trm #2
+23,B Tbet+/ABCs
+24,Monocyte #3/Innate mix
+25,NK/ILC
+26,B IgM+ memory #4
+27,
 28,
-29,Monocyte #2
-30,Plasmablast/plasma cell
-31,
-32,
-33,DC
-34,
+29,B plasma cell/plasmablast
+30,
+31,DC
+32,Monocyte #2

@@ -1,4 +1,6 @@
-# load libraries
+################################################################################
+# load libraries and custom scripts
+################################################################################
 silentLoadLibrary <- function(x) {
   suppressWarnings(suppressMessages(library(x, character.only = TRUE)))
 }
@@ -14,20 +16,35 @@ libraries <- c(
   "patchwork",
   "DropletUtils",
   "clustree",
-  "future"
+  "future",
+  "presto",
+  "msigdbr",
+  "fgsea",
+  "ComplexHeatmap",
+  # "rcna",
+  "WGCNA",
+  "hdWGCNA"
 )
+
+# reticulate::use_condaenv("hpap-cite")
 
 invisible(lapply(libraries, silentLoadLibrary))
 
-# reticulate::use_condaenv("hpap-cite", required = TRUE)
-
+# general scripts
 source("scripts/generic.R")
 source("scripts/adtProcessing.R")
 source("scripts/initalSeuratListMaker.R")
 source("scripts/clustering.R")
-source("scripts/dimPlots.R")
 
-# create list of seurat objects
+# plotting scripts
+source("scripts/dimPlots.R")
+source("scripts/deg.R")
+
+set.seed(42)
+
+################################################################################
+# preliminary setup and loading of meta/data files
+################################################################################
 rnaOut <- "../hpap-citeseq-data/rna"
 adtOut <- "../hpap-citeseq-data/adt"
 htoOut <- "../hpap-citeseq-data/hto"
@@ -95,16 +112,18 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
     scrubletOutDir <- "scrubletScores"
     
     # REMEMBER that this script needs to be run while in the hpap-cite conda env.
-    system(
-      glue("python scripts/doubletScorer.py --mm {matrixFn} --sampleName {xName} --outDir {scrubletOutDir}"),
-      wait = TRUE
-    )
-    
+    scrubletScoreFn <- paste0(scrubletOutDir, "/", xName, "_doubletScores.txt")
+    if (!file.exists(scrubletScoreFn)) {
+      system(
+        glue("python scripts/doubletScorer.py --mm {matrixFn} --sampleName {xName} --outDir {scrubletOutDir}"),
+        wait = TRUE
+      )
+      
+      stopifnot(file.exists(scrubletScoreFn))
+    }
+
     # read scrublet output and add to seurat object
     message("filtering doublets.")
-
-    scrubletScoreFn <- paste0(scrubletOutDir, "/", xName, "_doubletScores.txt")
-    stopifnot(file.exists(scrubletScoreFn))
     
     scores <- read.table(scrubletScoreFn, header = FALSE)[, 1]
     stopifnot(length(scores) == length(seuList[[i]]$orig.ident))
@@ -113,13 +132,6 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
   
     # filter out scrublet called doublets
     seuList[[i]] <- subset(seuList[[i]], subset = scrubletScore < 0.25)
-    
-    message("finding variable features.")
-    seuList[[i]] <- FindVariableFeatures(seuList[[i]])
-    
-    # TODO consider running this without the control abs
-    VariableFeatures(seuList[[i]], assay = "adt") <- rownames(seuList[[i]][["adt"]])
-    seuList[[i]] <- NormalizeData(seuList[[i]], assay = "adt", normalization.method = 'CLR', margin = 2)
     
     # add metadata
     runN <- as.character(seuList[[i]]$runN[1])
@@ -135,6 +147,18 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
   }
   
   message('merging datasets')
+  # filter out specific donors due to poor viability during thaw and initial qc
+  seuList <- lapply(seuList, function(x) {
+    x <- x[, x@meta.data$DonorID != "HPAP-043" & x@meta.data$DonorID != "HPAP-024" & !(x@meta.data$DonorID == "HPAP-098" & x@meta.data$Tissue == "Spleen")]
+    
+    message("finding variable features.")
+    seuList[[i]] <- FindVariableFeatures(seuList[[i]])
+    
+    VariableFeatures(seuList[[i]], assay = "adt") <- rownames(seuList[[i]][["adt"]])
+    seuList[[i]] <- NormalizeData(seuList[[i]], assay = "adt", normalization.method = 'CLR', margin = 2)
+    return(x)
+  })
+  
   seuMerged <- merge(seuList[[1]], seuList[2:length(seuList)])
   VariableFeatures(seuMerged, assay = "RNA") <- SelectIntegrationFeatures(
     object.list = seuList,
@@ -144,10 +168,14 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
     RunPCA(assay = "RNA")
   
   saveRDS(seuMerged, seuMergedFn)
+  
+  rm(seuList)
+  gc()
 }
 
-
-# harmonize merged seurat
+################################################################################
+# harmony batch effect correction against run number and donor ID.
+################################################################################
 if (file.exists(harmonizedFn) & file.exists(umapRdsFn)) {
   message("next rds (clustered + umap) already found so skipping import of harmonized rds")
   
@@ -178,6 +206,9 @@ if (file.exists(harmonizedFn) & file.exists(umapRdsFn)) {
     group.by.vars = harmonyGroupingVars)
   
   message("working on adt")
+  # normalize since this info isn't saved after merging for some reason...
+  seuMerged <- NormalizeData(seuMerged, assay = "adt", normalization.method = 'CLR', margin = 2)
+  
   VariableFeatures(seuMerged, assay = "adt") <- rownames(seuMerged[["adt"]])
   
   message("scaling adt")
@@ -207,22 +238,29 @@ if (file.exists(harmonizedFn) & file.exists(umapRdsFn)) {
   saveRDS(seuMerged, harmonizedFn)
 }
 
-# find clusters based on rna only
+################################################################################
+# cluster finding by RNA modality only
+################################################################################
+# plan("multisession", workers = 2)
+# options(future.globals.maxSize = 175000 * 1024^2)
 if (!file.exists(umapRdsFn)) {
   seuMerged <- FindNeighbors(seuMerged, assay = "RNA", reduction = "harmonyRNA", dims = 1:30)
   seuMerged <- FindClusters(
     seuMerged,
     algorithm = 4,
     method = "igraph",
-    resolution = c(0.5, 0.75, 1),
+    resolution = c(0.75, 1),
     verbose = TRUE)
   
-  
-  seuMerged <- RunUMAP(seuMerged,
-    dims = 1:30,
-    reduction.name = "rna.umap",
-    reduction.key = "rnaUMAP_",
-    reduction = "harmonyRNA")
+  saveRDS(seuMerged, "rds/seuMerged_withClusters")
+
+seuMerged <- RunUMAP(seuMerged,
+  dims = 1:30,
+  reduction.name = "rna.umap",
+  reduction.key = "rnaUMAP_",
+  n.neighbors = 50,
+  min.dist = 0.2,
+  reduction = "harmonyRNA")
   
   saveRDS(seuMerged, umapRdsFn)
   
@@ -230,15 +268,17 @@ if (!file.exists(umapRdsFn)) {
   seuMerged <- readRDS(umapRdsFn)
 }
 
+clusterOrder <- unique(seuMerged$RNA_snn_res.1)
+clusterOrder <- factor(clusterOrder, levels = str_sort(clusterOrder, numeric = TRUE))
+
+labellerAdt <- tsaCatalog$cleanName
+names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
 
 smallMultipleUmaps(seu = seuMerged, parameter = "RNA_snn_res.1")
-
 smallMultipleUmaps(seu = seuMerged, parameter = "DonorID", ncol = 6, height = 5)
-smallMultipleUmaps(seu = seuMerged, parameter = "Tissue", ncol = 5, height = 2.5)
-smallMultipleUmaps(seu = seuMerged, parameter = "runN", ncol = 7, height = 1.5)
+smallMultipleUmaps(seu = seuMerged, parameter = "Tissue", ncol = 4, height = 5)
+smallMultipleUmaps(seu = seuMerged, parameter = "runN", ncol = 4, height = 5)
 smallMultipleUmaps(seu = seuMerged, parameter = "Disease_Status", ncol = 3, width = 4, height = 1.5)
-smallMultipleUmaps(seu = subset(seuMerged, subset = Tissue != "Spleen"),
-  parameter = "Disease_Status", filename = "Disease_Status_noSpleen", ncol = 3, width = 4, height = 1.5)
 
 p <- DimPlotCustom(seuMerged,
   groupBy = c("DonorID", "Tissue", "runN"),
@@ -248,15 +288,209 @@ p <- DimPlotCustom(seuMerged,
   textSizeOnlyTheme
 savePlot(plot = p, fn = "umap_all", devices = "png", gwidth = 9, gheight = 4)
 
+# the giant umap
+DimPlot(seuMerged, reduction = "rna.umap", group.by = "RNA_snn_res.1") +
+  theme(
+    plot.title = element_blank(),
+    legend.position = "bottom",
+    legend.justification = "center"
+  ) +
+  scale_color_discrete(limits = levels(clusterOrder))
 
-clusterOrder <- unique(seuMerged$RNA_snn_res.1)
-clusterOrder <- factor(clusterOrder, levels = str_sort(clusterOrder, numeric = TRUE))
+# add in condensed tissue state
+tissueCondensed <- case_when(
+  grepl("pLN", seuMerged$Tissue) ~ "pLN",
+  grepl("(MES|SMA)", seuMerged$Tissue) ~ "mesLN",
+  TRUE ~ seuMerged$Tissue
+)
+names(tissueCondensed) <- names(seuMerged$Tissue)
+seuMerged <- AddMetaData(
+  object = seuMerged,
+  metadata = tissueCondensed,
+  col.name = 'TissueCondensed'
+)
+rm(tissueCondensed)
 
-labellerAdt <- tsaCatalog$cleanName
-names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
+# add heatshock protein score
+heatshockGenes <- read.csv("hsp_genes.tsv", sep = "\t")
+seuMerged <- AddModuleScore(
+  object = seuMerged,
+  features = list(heatshockGenes$Approved.symbol),
+  name = "heatShockProgram",
+  seed = 42
+)
+
+seuDf <- FetchData(object = seuMerged,
+  vars = c("TissueCondensed", "heatShockProgram1", "Disease_Status", "RNA_snn_res.1", "DonorID")) %>%
+  mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D"))) %>%
+  mutate(cell_id = Cells(seuMerged))
+
+seuDf %>%
+  ggplot(aes(x = DonorID, y = heatShockProgram1, fill = TissueCondensed)) +
+  geom_boxplot(position = position_dodge2(width = 0.8, preserve = "single")) +
+  theme_bw() +
+  geom_hline(yintercept = 0.2, linetype = "dotted") +
+  facet_wrap(~ Disease_Status, scales = "free_x")
+
+rm(seuDf)
+save.image("rds/preManualAnnotSubset.rData")
+
+baseMarkers <- c(
+  "A0034", #CD3
+  "A0072", #CD4
+  "A0046", #CD8
+  "A0081", #CD14
+  "A0083", #CD16
+  "A0047", #CD56
+  "A0050", #CD19
+  "A0087", #CD45RO
+  "A0063", #CD45RA
+  "A0154", #CD27
+  "A0386", #CD28
+  "A0156", #CD95
+  "A0390", #CD127
+  "A0146", #CD69
+  "A0085", #CD25
+  "A0089", #TIGIT
+  "A0088", #PD1
+  "A0141", #CCR5
+  "A0144", #CXCR5
+  "A0149"  #CD161
+)
+
+# base adt dot style
+p <- DotPlot(seuMerged, features = paste0("adt_", baseMarkers), group.by = "RNA_snn_res.1") +
+  scale_y_discrete(limits = levels(clusterOrder)) +
+  textSizeOnlyTheme +
+  theme(
+    panel.grid.major.y = element_line(color = "#eeeeee"),
+    axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE, hjust = 1)) +
+  scale_x_discrete(labels = labellerAdt)
 
 
-# load in manual annotations
+basePanelRNA <- c(
+  "IL7R", # cd127
+  "CCR7",
+  "CD14",
+  "CSF3R", #cd114
+  "LYZ",
+  "S100A4",
+  "MS4A1",
+  "CD8A",
+  "FCGR3A",
+  "MS4A7",
+  "GNLY",
+  "NKG7",
+  "FCER1A",
+  "CST3",
+  "PPBP", #cxcl7 (platelet basic protein)
+  "CXCR5",
+  "TOX",
+  "TCF7",
+  "TBX21",
+  "CD69",
+  "CD3D",
+  "CD3G",
+  "CD40LG",
+  "ICOS",
+  "FOXP3",
+  "GATA3",
+  "IKZF2", # helios
+  "RORC",
+  "BCL6",
+  "PRDM1", #blimp
+  "CD38",
+  "TNFRSF17" #BCMA
+)
+
+# base rna dot style
+p <- DotPlot(seuMerged, features = basePanelRNA, group.by = "RNA_snn_res.1") +
+  scale_y_discrete(limits = levels(clusterOrder)) +
+  textSizeOnlyTheme +
+  theme(
+    panel.grid.major.y = element_line(color = "#eeeeee"),
+    axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE, hjust = 1))
+
+# # cluster DE for adt and rna
+# # get differential expression of various ADT markers
+# getClusterDifferences(
+#   seu = seuMerged,
+#   clusterName = "RNA_snn_res.1",
+#   tsvFn = "outs/tsv/DE_ADT_cluster.tsv",
+#   assay = "adt",
+#   tsa_catalog = tsaCatalog,
+#   findMarkerMethod = "wilcox",
+#   only.pos = TRUE,
+#   densify = TRUE,
+#   max.cells.per.ident = 100000,
+#   random.seed = 42)
+# 
+# options(future.globals.maxSize = 10000 * 1024^2)
+# plan("multisession", workers = 8)
+# # get differential expression of various RNA markers
+# getClusterDifferences(
+#   seu = seuMerged,
+#   clusterName = "RNA_snn_res.1",
+#   assay = "RNA",
+#   tsvFn = "outs/tsv/DE_RNA_cluster.tsv",
+#   parallelize = TRUE,
+#   findMarkerMethod = "wilcox",
+#   only.pos = TRUE,
+#   densify = TRUE,
+#   max.cells.per.ident = 100000,
+#   random.seed = 42)
+# 
+
+
+################################################################################
+# export for panc db processing
+################################################################################
+# FetchData(object = seuMerged,
+#   vars = c("DonorID", "Tissue", "runN", "well", "hash.ID")) %>%
+#   mutate(barcode = stringr::str_match(rownames(.), "[ATGC]+$")[, 1]) %>%
+#   dplyr::rename(
+#     donorID = DonorID,
+#     tissue = Tissue,
+#     hashID = hash.ID,
+#     projectWellID = well
+#   ) %>%
+#   write.table(x = ., file = "outs/csv/panc-db_barcodes.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+# 
+# sampleMeta %>%
+#   select(DonorID, Tissue, Run, HTO_DNA_ID) %>%
+#   dplyr::rename(
+#     donorID = DonorID,
+#     tissue = Tissue,
+#     runN = Run,
+#     hashID = HTO_DNA_ID,
+#   ) %>%
+#   write.table(x = ., file = "outs/csv/panc-db_sampleMeta.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+# 
+# unhashedSampleMeta %>%
+#   mutate(runID = stringr::str_match(id, "(\\d{8}_hpap_\\d)_(.*)")[, 2:3]) %>%
+#   mutate(project = runID[, 1]) %>%
+#   mutate(well = runID[, 2]) %>%
+#   select(-runID) %>%
+#   dplyr::rename(
+#     projectWellID = id,
+#     runN = run
+#   ) %>%
+#   left_join(sampleMeta %>% select(Run, rna_fastq_dir, adthto_fastq_dir) %>% distinct(), by = c("runN" = "Run")) %>%
+#   mutate(rna_fastq_dir = gsub(
+#     "/project/bettslab/citeseq_raw/",
+#     "/project/betts_shescott_lab/hpap_atlas_citeseq/rna_fastq",
+#     rna_fastq_dir)) %>%
+#   mutate(adthto_fastq_dir = gsub(
+#     "/project/bettslab/citeseq_raw/",
+#     "/project/betts_shescott_lab/hpap_atlas_citeseq/adthto_fastq/",
+#     adthto_fastq_dir)) %>%
+#   write.table(x = ., file = "outs/csv/panc-db_runs.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
+
+
+################################################################################
+# load in manual annotations and create condensed labeling for cluster and
+# phenotypes and look at HSP signatures
+################################################################################
 manualAnnot <- read.csv("manualClusterAnnotations/RNAsnn1.csv", header = FALSE)
 manualAnnotDict <- manualAnnot[, 2]
 names(manualAnnotDict) <- as.character(manualAnnot[, 1])
@@ -270,71 +504,563 @@ seuMerged <- AddMetaData(
   col.name = 'manualAnnot'
 )
 seuMerged <- subset(seuMerged, subset = manualAnnot != "")
+rm(manualAnnot)
 
-
-tissueCondensed <- case_when(
-  grepl("pLN", seuMerged$Tissue) ~ "pLN",
-  grepl("(MES|SMA)", seuMerged$Tissue) ~ "mesLN",
-  TRUE ~ seuMerged$Tissue
+phenotypeCondensed <- case_when(
+  grepl("^CD4", seuMerged$manualAnnot) ~ "CD4 T cell",
+  grepl("^CD8", seuMerged$manualAnnot) ~ "CD8 T cell",
+  grepl("^B", seuMerged$manualAnnot) ~ "B cell",
+  grepl("NK", seuMerged$manualAnnot) ~ "NK/ILC cell",
+  TRUE ~ "Mono/APC cell"
 )
-names(tissueCondensed) <- names(seuMerged$Tissue)
+names(phenotypeCondensed) <- names(seuMerged$manualAnnot)
 seuMerged <- AddMetaData(
   object = seuMerged,
-  metadata = tissueCondensed,
-  col.name = 'TissueCondensed'
+  metadata = phenotypeCondensed,
+  col.name = 'phenotypeCondensed'
 )
 
-rm(manualAnnot)
-rm(tissueCondensed)
+rm(phenotypeCondensed)
+save.image("rds/postManualAnnotSubset.rData")
 
-# overview graphs
-smallMultipleUmaps(seu = seuMerged, parameter = "manualAnnot")
+### START HERE WHEN LOADING PREVIOUS RDATA
+load("rds/postManualAnnotSubset.rData")
 
-seuDf <- FetchData(object = seuMerged, vars = c("TissueCondensed", "Disease_Status", "manualAnnot", "DonorID")) %>%
+################################################################################
+# post annotation graphs
+################################################################################
+# HSP signature graphs
+seuDf <- FetchData(object = seuMerged,
+  vars = c("TissueCondensed", "heatShockProgram1", "Disease_Status", "manualAnnot", "RNA_snn_res.1", "DonorID")) %>%
   mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
 
-# cluster proportion graph
 seuDf %>%
-  group_by(Disease_Status, TissueCondensed, DonorID, manualAnnot) %>%
-  summarize(Count = n()) %>%
-  group_by(DonorID, TissueCondensed) %>%
-  mutate(prop = Count / sum(Count)) %>%
-  ggplot(aes(x = manualAnnot, y = prop, fill = Disease_Status)) +
-  geom_point(alpha = 0.9, color = "#555555", pch = 21, aes(group = Disease_Status), position = position_dodge(width = 0.8)) +
-  facet_wrap(~ TissueCondensed, ncol = 1) +
-  scale_fill_manual(values = c("#4daf4a", "#377eb8", "#e41a1c")) +
-  labs(y = "Proportion within tissue of speciifc donor",
-    fill = "Status") +
+  ggplot(aes(x = DonorID, y = heatShockProgram1, fill = TissueCondensed)) +
+  geom_boxplot(position = position_dodge2(width = 0.8, preserve = "single")) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
+  geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
+
+
+seuDf %>%
+  ggplot(aes(x = manualAnnot, y = heatShockProgram1)) +
+  geom_boxplot(position = position_dodge2(width = 0.8, preserve = "single")) +
+  theme_bw() +
+  textSizeOnlyTheme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_color_discrete(limits = levels(manualClusterOrder)) +
+  theme(plot.margin = margin(3, 3, 3, 3, "lines")) +
+  geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
+  geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
+
+seuDf %>%
+  ggplot(aes(x = heatShockProgram1, color = TissueCondensed)) +
+  geom_density() +
   theme_classic() +
+  geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
+  geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
+
+
+rm(seuDf)
+
+##### START run this again after loading manual annot rdata
+hspCutoff <- quantile(seuMerged$heatShockProgram1, probs = 0.95)
+
+customSortAnnotation <- function(x) {
+  priority <- c("B", "CD4", "CD8", "NK", "DC", "Monocyte")
+
+  x <- sort(unique(x))
+  newX <- c()
+  
+  for (p in priority) {
+    pIndices <- grepl(p, x)
+    newX <- append(newX, x[pIndices])
+    x <- x[!pIndices]
+  }
+  
+  if (length(newX) > 0) {
+    newX <- append(newX, x)
+  }
+  
+  
+  return(newX)
+}
+
+manualClusterOrder <- unique(seuMerged$manualAnnot)
+manualClusterOrder <- factor(manualClusterOrder, levels = customSortAnnotation(manualClusterOrder))
+#### END run this again after loading manual annot rdata
+
+# PRE HSP FILTERING plots
+p <- DimPlot(seuMerged, reduction = "rna.umap", group.by = "manualAnnot") +
+  textSizeOnlyTheme +
+  coord_fixed() +
   theme(
+    plot.title = element_blank(),
     legend.position = "bottom",
-    legend.margin = margin(t = -20, b = 0),
-    plot.margin = margin(10, 50, 10, 50, unit = "pt"),
-    strip.background = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-    axis.title.x = element_blank(),
+    axis.text = element_blank(),
+    legend.justification = "center",
+    plot.margin = margin(4,4,4,4, unit = "lines")
+  ) +
+  scale_color_discrete(limits = levels(manualClusterOrder))
+savePlot(p, fn = "ggSlide_UMAPwithAnnotCluster", devices = "png", gheight = 8, gwidth = 10)
+
+# heatmap of ADT expression by cluster
+p <- DotPlot(seuMerged, features = paste0("adt_", baseMarkers), group.by = "manualAnnot") +
+  scale_y_discrete(limits = levels(manualClusterOrder)) +
+  labs(
+    x = "Surface marker",
+    y = "Cluster") +
+  theme(
+    axis.title = element_text(size = BASEPTFONTSIZE + 2),
+    legend.text = element_text(size = BASEPTFONTSIZE + 2),
+    legend.title = element_text(size = BASEPTFONTSIZE + 2),
+    axis.text.y = element_text(size = BASEPTFONTSIZE + 2),
     panel.grid.major.y = element_line(color = "#eeeeee"),
-    panel.grid.major.x = element_line(color = "#eeeeee", size = 0.8))
+    axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE + 2, hjust = 1)) +
+  scale_x_discrete(labels = labellerAdt)
+savePlot(p, fn = "ggSlide_DotPlotADTwithAnnotCluster", devices = "png", gheight = 10, gwidth = 12)
 
-
-# number of cells for each cluster
-seuDf %>%
-  group_by(Disease_Status, TissueCondensed, manualAnnot) %>%
-  summarize(Count = n()) %>%
-  ggplot(aes(x = Count, y = manualAnnot, fill = Disease_Status)) +
-  geom_point(alpha = 0.9, color = "#555555", pch = 21, aes(group = Disease_Status), position = position_dodge(width = 0.8)) +
-  facet_wrap(~ TissueCondensed, nrow = 1) +
-  scale_x_continuous(labels = scales::label_number(suffix = "K", scale = 1e-3, big.mark = ",")) +
-  theme_classic() +
-  labs(x = "Number of cells", fill = "Disease Status") +
+# heatmap of gene expression by cluster
+p <- DotPlot(seuMerged, features = basePanelRNA, group.by = "manualAnnot") +
+  scale_y_discrete(limits = levels(manualClusterOrder)) +
+  labs(
+    x = "Surface marker",
+    y = "Cluster") +
   theme(
-    legend.position = "bottom",
-    plot.margin = margin(10, 30, 10, 30, unit = "pt"),
-    strip.background = element_blank(),
-    panel.spacing = unit(15, units = "pt"),
-    axis.title.y = element_blank(),
-    text = element_text(size = BASEPTFONTSIZE + 2),
-    panel.grid.major.y = element_line(color = "#dddddd80", size = 6),
-    panel.grid.major.x = element_line(color = "#55555580", size = 0.8, linetype = "dotted"))
+    axis.title = element_text(size = BASEPTFONTSIZE + 2),
+    legend.text = element_text(size = BASEPTFONTSIZE + 2),
+    legend.title = element_text(size = BASEPTFONTSIZE + 2),
+    axis.text.y = element_text(size = BASEPTFONTSIZE + 2),
+    panel.grid.major.y = element_line(color = "#eeeeee"),
+    axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE + 2, hjust = 1)) +
+  scale_x_discrete(labels = labellerAdt)
+savePlot(p, fn = "ggSlide_DotPlotRNAwithAnnotCluster", devices = "png", gheight = 10, gwidth = 12)
 
-# TODO make a manual annot sorter
+
+# frequency of the clusters across tissues
+frequencyDf <- data.frame(
+  cluster = seuMerged$manualAnnot,
+  tissue = seuMerged$Tissue,
+  donor = seuMerged$DonorID,
+  diseaseStatus = seuMerged$Disease_Status) %>%
+  mutate(tissue = case_when(
+    grepl("(pLN|Tail)",tissue) ~ "pLN",
+    grepl("(MES|SMA)", tissue) ~ "mesLN",
+    TRUE ~ tissue
+  )) %>%
+  mutate(diseaseStatus = factor(diseaseStatus, levels = c("ND", "AAb+", "T1D")))
+
+
+p <- frequencyDf %>%
+  group_by(cluster, tissue, donor) %>%
+  summarize(nCells = n()) %>%
+  group_by(donor, tissue) %>%
+  mutate(propOfTissue = nCells / sum(nCells)) %>%
+  ggplot(aes(x = cluster, y = propOfTissue)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(alpha = 0.5, color = "#000000", size = 2) +
+  facet_wrap(~ tissue, ncol = 1) +
+  frequencyPlotTheme
+savePlot(p, fn = "ggSlide_FrequencyPlotAcrossTissuesAndClusters", devices = "png", gheight = 8, gwidth = 14)
+
+# frequency of the clusters across tissues and disease
+p <- frequencyDf %>%
+  group_by(cluster, tissue, diseaseStatus, donor) %>%
+  summarize(nCells = n()) %>%
+  group_by(donor, diseaseStatus, tissue) %>%
+  mutate(propOfDiseaseStatus = nCells / sum(nCells)) %>%
+  ggplot(aes(x = cluster, y = propOfDiseaseStatus, fill = diseaseStatus)) +
+  geom_point(pch = 21, alpha = 0.7, color = "#000000", size = 2, position = position_dodge(width = 0.7)) +
+  facet_wrap(~ tissue, ncol = 1) +
+  frequencyPlotTheme +
+  theme(legend.position = "bottom")
+savePlot(p, fn = "ggSlide_FrequencyPlotAcrossTissuesAndClustersAndDisease", devices = "png", gheight = 8, gwidth = 14)
+
+
+# number of cells in each cluster
+p <- frequencyDf %>%
+  group_by(cluster, tissue, diseaseStatus) %>%
+  summarize(nCells = n()) %>%
+  ggplot(aes(x = cluster, y = nCells, fill = diseaseStatus)) +
+  geom_point(pch = 21, color = "#000000", alpha = 0.9, size = 2, position = position_dodge(width = 0.75)) +
+  facet_wrap(~ tissue, ncol = 1) +
+  frequencyPlotTheme +
+  theme(legend.position = "bottom") +
+  labs(y = "Total number of cells")
+savePlot(p, fn = "ggSlide_AbsCountPlotAcrossTissuesAndClustersAndDisease", devices = "png", gheight = 8, gwidth = 14)
+
+# dex genes
+clusterDEG <- read.csv("outs/tsv/DE_RNA_cluster.tsv", sep = "\t")
+top25DegByCluster <- clusterDEG %>%
+  group_by(cluster) %>%
+  filter(p_val_adj < 0.05) %>%
+  slice_max(avg_log2FC, n = 25)
+  
+top25DegAvgExpression <- AverageExpression(
+  object = seuMerged,
+  assays = "RNA",
+  features = top25DegByCluster$gene,
+  group.by = "manualAnnot",
+  slot = "data")
+
+top25DegAvgExpression <- top25DegAvgExpression$RNA
+p <- Heatmap(
+  matrix = t(scale(t(top25DegAvgExpression))),
+  cluster_columns = FALSE,
+  cluster_rows = TRUE,
+  show_row_names = FALSE,
+  row_names_gp = gpar(fontsize = 5),
+  column_names_gp = gpar(fontsize = 7),
+  column_names_rot = 45,
+  row_km = length(colnames(top25DegAvgExpression)),
+  right_annotation = rowAnnotation(
+    foo = anno_block(gp = gpar(fill = "#000000"), width = unit(1, "mm")),
+    bar = anno_block(
+      graphics = function(index, levels) {
+        lbls <- rownames(top25DegAvgExpression)[index]
+        lbls <- str_wrap(paste(lbls, collapse = " "), width = 50)
+        
+        grid.rect(gp = gpar(fill = NA, col = NA))
+        txt = paste(lbls, collapse = ",")
+        grid.text(txt, 0.01, 0.5, rot = 0, hjust = 0, gp = gpar(fontsize = 6))
+      },
+      width = unit(7, "cm"))
+  ),
+  name = "Scaled Average Expression",
+  heatmap_legend_param = list(
+    direction = "horizontal",
+    title_position = "topcenter"),
+  row_title_gp = gpar(fontsize = 6)
+)
+
+savePlot(
+  plot = grid.grabExpr(wrap_elements(draw(p, heatmap_legend_side = "bottom", padding = unit(c(2, 4, 2, 2), "lines")))),
+  fn = "ggSlide_topRNAByCluster",
+  devices = "png",
+  gheight = 10,
+  gwidth = 8)
+
+
+# dex adt
+clusterDEA <- read.csv("outs/tsv/DE_ADT_cluster.tsv", sep = "\t")
+top25DeaByCluster <- clusterDEA %>%
+  group_by(cluster) %>%
+  filter(p_val_adj < 0.05) %>%
+  slice_max(avg_log2FC, n = 25)
+
+top25DeaAvgExpression <- AverageExpression(
+  object = seuMerged,
+  assays = "adt",
+  features = top25DeaByCluster$gene,
+  group.by = "manualAnnot",
+  slot = "data")
+
+top25DeaAvgExpression <- top25DeaAvgExpression$adt
+rownames(top25DeaAvgExpression) <- labellerAdt[paste0("adt_", rownames(top25DeaAvgExpression))]
+
+p <- Heatmap(
+  matrix = t(scale(t(top25DeaAvgExpression))),
+  cluster_columns = FALSE,
+  cluster_rows = TRUE,
+  show_row_names = FALSE,
+  row_names_gp = gpar(fontsize = 5),
+  column_names_gp = gpar(fontsize = 7),
+  column_names_rot = 45,
+  row_km = length(colnames(top25DeaAvgExpression)),
+  right_annotation = rowAnnotation(
+    foo = anno_block(gp = gpar(fill = "#000000"), width = unit(1, "mm")),
+    bar = anno_block(
+      graphics = function(index, levels) {
+        lbls <- rownames(top25DeaAvgExpression)[index]
+        lbls <- str_wrap(paste(lbls, collapse = " | "), width = 50)
+        
+        grid.rect(gp = gpar(fill = NA, col = NA))
+        txt = paste(lbls, collapse = ",")
+        grid.text(txt, 0.01, 0.5, rot = 0, hjust = 0, gp = gpar(fontsize = 6))
+      },
+      width = unit(7, "cm"))
+  ),
+  name = "Scaled Average Expression",
+  heatmap_legend_param = list(
+    direction = "horizontal",
+    title_position = "topcenter"),
+  row_title_gp = gpar(fontsize = 6)
+)
+
+savePlot(
+  plot = grid.grabExpr(wrap_elements(draw(p, heatmap_legend_side = "bottom", padding = unit(c(2, 4, 2, 2), "lines")))),
+  fn = "ggSlide_topADTByCluster",
+  devices = "png",
+  gheight = 10,
+  gwidth = 8)
+
+
+################################################################################
+# wgcna analysis for pLN only
+################################################################################
+wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D.rds"
+wcgnaCheckpointImage <- "rds/postNetworkPostModule_pLN_ND_T1D.RData"
+if (!file.exists(wcgnaCheckpointFile)) {
+  # filter dataset to remove cells with >95 percentile of hsp gene signatures
+  seuMergedSmol <- subset(seuMerged, subset = heatShockProgram1 < hspCutoff & TissueCondensed == "pLN" & Disease_Status %in% c("ND", "T1D"))
+  gc() # need to clear from RAM after the previous step
+  
+  seuMergedSmol <- SetupForWGCNA(
+    seuMergedSmol,
+    gene_select = "fraction", # the gene selection approach
+    fraction = 0.05, # fraction of cells that a gene needs to be expressed in order to be included
+    wgcna_name = "hpap_citeseq_diseaseSubset_pLN" # the name of the hdWGCNA experiment
+  )
+  
+  seuMergedSmol <- MetacellsByGroups(
+    seurat_obj = seuMergedSmol,
+    group.by = c("DonorID", "Disease_Status", "phenotypeCondensed"), # specify the columns in seurat_obj@meta.data to group by
+    reduction = 'harmonyRNA', # select the dimensionality reduction to perform KNN on
+    assay = "RNA",
+    k = 25, # nearest-neighbors parameter
+    max_shared = 10, # maximum number of shared cells between two metacells
+    ident.group = 'Disease_Status', # set the Idents of the metacell seurat object,
+    max_iter = 2500,
+    verbose = TRUE
+  )
+  
+  seuMergedSmol <- NormalizeMetacells(seuMergedSmol)
+  
+  seuMergedSmol <- SetDatExpr(
+    seuMergedSmol,
+    group_name = c("ND", "T1D"),
+    group.by = 'Disease_Status',
+    assay = "RNA"
+  )
+  
+  # Test different soft powers:
+  seuMergedSmol <- TestSoftPowers(
+    seuMergedSmol,
+    networkType = 'signed'
+  )
+  
+  # plot the results:
+  plot_list <- PlotSoftPowers(seuMergedSmol)
+  wrap_plots(plot_list, ncol = 2)
+  
+  # construct co-expression network:
+  seuMergedSmol <- ConstructNetwork(
+    seuMergedSmol,
+    soft_power = 9, #adjust this based on the threshold identified from previous graph...
+    setDatExpr = FALSE,
+    tom_name = 'nd_t1d_pln_topological' # name of the topological overlap matrix written to disk
+  )
+  
+  PlotDendrogram(seuMergedSmol, main='ND/T1D pLN hdWGCNA Dendrogram')
+  gc()
+  
+  seuMergedSmol <- ScaleData(seuMergedSmol, features = VariableFeatures(seuMergedSmol), assay = "RNA")
+  save.image("rds/postNetworkPreModule_pLN_ND_T1D.RData")
+  
+  # this step is massive in RAM usage...
+  seuMergedSmol <- ModuleEigengenes(
+    seuMergedSmol,
+    group.by.vars = c("DonorID")
+  )
+  
+  save.image(wcgnaCheckpointImage)
+  
+  seuMergedSmol <- ModuleConnectivity(
+    seuMergedSmol,
+    group.by = 'Disease_Status', group_name = c("ND", "T1D")
+  )
+  
+  seuMergedSmol <- ResetModuleNames(
+    seuMergedSmol,
+    new_name = "T1D-M"
+  )
+  
+  PlotKMEs(seuMergedSmol, ncol = 7, text_size = 3.5)
+  
+  modulesInterest <- GetModules(seuMergedSmol)
+  hubInterest <- GetHubGenes(seuMergedSmol, n_hubs = 25)
+  head(hubInterest)
+  
+  seuMergedSmol <- ModuleExprScore(
+    seuMergedSmol,
+    n_genes = 25,
+    method = 'Seurat'
+  )
+  
+  # get hMEs from seurat object
+  MEs <- GetMEs(seuMergedSmol, harmonized = TRUE)
+  mods <- colnames(MEs)
+  mods <- mods[mods != 'grey']
+  
+  # add hMEs to Seurat meta-data:
+  seuMergedSmol@meta.data <- cbind(seuMergedSmol@meta.data, MEs)
+  seuMergedSmol$Disease_Status <- factor(seuMergedSmol$Disease_Status, levels = c("ND", "T1D"))
+  
+  saveRDS(seuMergedSmol, file = wcgnaCheckpointFile)
+} else {
+  load(wcgnaCheckpointImage)
+  seuMergedSmol <- readRDS(wcgnaCheckpointFile)
+}
+
+# compute correlations to traits
+seuMergedSmol <- ModuleTraitCorrelation(
+  seuMergedSmol,
+  traits = c("Disease_Status"),
+  group.by = "manualAnnot"
+)
+
+moduleTraitCorRes <- GetModuleTraitCorrelation(seuMergedSmol)
+
+corMatrix <- do.call("rbind", moduleTraitCorRes$cor)
+fdrMatrix <- do.call("rbind", moduleTraitCorRes$fdr)
+
+tmp <- Heatmap(
+  matrix = corMatrix,
+  cluster_columns = FALSE,
+  cluster_rows = FALSE,
+  show_row_names = TRUE,
+  # row_split = rep(names(moduleTraitCorRes$cor), each = 3),
+  # right_annotation = rowAnnotation(
+  #   Trait = rep(c("Disease Status"), times = length(names(moduleTraitCorRes$cor))),
+  #   col = list(Trait = c("Disease Status" = "#1b9e77")),
+  #   annotation_legend_param = list(at = c("Disease Status"))),
+  row_title_rot = 0,
+  row_names_gp = gpar(fontsize = 8),
+  column_names_gp = gpar(fontsize = 10),
+  column_names_rot = 45,
+  row_gap = unit(5, "pt"),
+  cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
+    fdrVal <- fdrMatrix[i,j]
+    fdrText <- symnum(
+      fdrVal,
+      corr = FALSE, na = FALSE,
+      cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+      symbols = c("***", "**", "*", " ", ""))
+
+    grid.text(fdrText, x, y, gp = gpar(fontsize = 8))
+  },
+  name = "Module Trait Correlation",
+  heatmap_legend_param = list(
+    direction = "vertical"),
+  row_title_gp = gpar(fontsize = 10)
+)
+draw(tmp, padding = unit(c(1, 3, 1, 1), "lines"))
+
+tmp <- which(fdrMatrix < 0.05 & abs(corMatrix) > 0.3)
+arrayInd(tmp, .dim = dim(corMatrix))
+
+
+# modules of interest from Greg
+gregModulesInterest <- read.csv("modules_genes_followup.csv")
+
+seuMergedHspCutoff <- subset(seuMerged, subset = heatShockProgram1 < hspCutoff & TissueCondensed == "pLN")
+seuMergedHspCutoff$Disease_Status <- factor(seuMergedHspCutoff$Disease_Status, levels = c("ND", "AAb+", "T1D"))
+seuMergedHspCutoff$manualAnnot <- factor(seuMergedHspCutoff$manualAnnot, levels = levels(manualClusterOrder))
+
+# look at all pop comparison
+genesAllPopComparison <- gregModulesInterest[gregModulesInterest$compare_across_all_cell_pops, "gene_name"]
+genesAllPopComparison <- unique(genesAllPopComparison)
+
+genesAllPopComparisonAvgMat <- AverageExpression(
+  object = seuMergedHspCutoff,
+  assays = "RNA",
+  features = genesAllPopComparison,
+  group.by = c("manualAnnot", "Disease_Status"),
+  slot = "data")
+
+genesAllPopComparisonAvgMat <- genesAllPopComparisonAvgMat$RNA
+
+colGroup <- rep(levels(seuMergedHspCutoff$Disease_Status), times = length(levels(seuMergedHspCutoff$manualAnnot)))
+colGroup <- factor(colGroup, levels = levels(seuMergedHspCutoff$Disease_Status))
+
+colSplit <- rep(levels(seuMergedHspCutoff$manualAnnot), each = length(levels(seuMergedHspCutoff$Disease_Status)))
+
+p <- Heatmap(
+  matrix = t(scale(t(genesAllPopComparisonAvgMat))),
+  cluster_columns = FALSE,
+  cluster_rows = FALSE,
+  show_row_names = TRUE,
+  show_column_names = FALSE,
+  row_names_gp = gpar(fontsize = 12),
+  column_names_gp = gpar(fontsize = 7),
+  column_names_rot = 45,
+  column_split = colSplit,
+  bottom_annotation = columnAnnotation(
+    `Disease\nStatus` = colGroup,
+    col = list(`Disease\nStatus` = DISEASESTATUSCOLORS),
+    annotation_legend_param = list(`Disease\nStatus` = list(direction = "horizontal"))),
+  name = "Scaled Average\nExpression",
+  heatmap_legend_param = list(
+    direction = "horizontal",
+    title_position = "topcenter"),
+  row_title_gp = gpar(fontsize = 8),
+  column_title_side = "bottom",
+  column_title_rot = 90,
+  column_title_gp = gpar(fontsize = 10),
+)
+
+draw(p,
+  merge_legend = TRUE,
+  padding = unit(c(5, 3, 3, 1), "lines"),
+  annotation_legend_side = "bottom",
+  heatmap_legend_side = "bottom")
+
+
+# look at specific modules of interest
+tmp <- gregModulesInterest %>%
+  filter(cell_population != "all") %>%
+  group_by(module) %>%
+  summarize(popInterest = unique(cell_population))
+
+uniqModules <- unique(tmp$module)
+modulePopsDict <- lapply(uniqModules, function(x) {
+  y <- unlist(tmp[tmp$module == x, "popInterest"])
+  names(y) <- NULL
+  
+  return(y)
+})
+names(modulePopsDict) <- uniqModules
+
+moduleGeneDict <- lapply(uniqModules, function(x) {
+  y <- unlist(gregModulesInterest[gregModulesInterest$module == x, "gene_name"])
+  y <- unique(y)
+  names(y) <- NULL
+  
+  return(y)
+})
+names(moduleGeneDict) <- uniqModules
+
+moduleVlnPlots <- lapply(uniqModules, function(x) {
+  popsOfInterest <- modulePopsDict[[x]]
+  genesOfInterest <- moduleGeneDict[[x]]
+  
+  if (length(popsOfInterest) > 5) {
+    ncols <- 2
+  } else {
+    ncols <- 4
+  }
+  
+  seu <- subset(seuMergedHspCutoff, subset = manualAnnot %in% popsOfInterest)
+  p <- VlnPlot(seu,
+    features = genesOfInterest,
+    group.by = "manualAnnot",
+    split.by = "Disease_Status",
+    pt.size = 0,
+    ncol = ncols
+  ) &
+    scale_fill_manual(values = DISEASESTATUSCOLORS)
+})
+
+################################################################################
+# generating subplots for figures
+################################################################################
+
+# post-hsp subset
+seuMergedPostHSP <- subset(seuMerged,
+  subset = heatShockProgram1 < hspCutoff)
+
+saveRDS(seuMergedPostHSP,
+  paste0("outs/rds/seuMergedPostHSP_forFigures_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".rds"))
+
+

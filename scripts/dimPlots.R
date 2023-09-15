@@ -21,10 +21,16 @@ DimPlotCustom <- function(
   groupByTitles = groupBy,
   minimalTheme = TRUE,
   nLegendCols = 5,
-  nCols = length(groupBy) %/% 2
+  nCols = NULL
 ) {
   if (!(is.vector(groupBy) && is.atomic(groupBy))) {
     groupBy = c(groupBy)
+  }
+  
+  if (is.null(nCols) & length(groupBy) != 1) {
+    nCols <- length(groupBy) %/% 2
+  } else if (is.null(nCols) & length(groupBy) == 1) {
+    nCols <- 1
   }
   
   names(groupByTitles) <- groupBy
