@@ -38,13 +38,25 @@ umapPlotThemeNoLeg <- list(
     plot.title = element_text(size = 8, hjust = 0.5, face = "plain"))
 )
 
-# umapPlotThemeLeg <- theme(
-#   legend.position = "bottom",
-#   axis.ticks = element_blank(),
-#   axis.text = element_blank(),
-#   legend.margin = margin(0,0,0,0),
-#   plot.title.position = "panel"
-# )
+customSortAnnotation <- function(x) {
+  priority <- c("B", "CD4", "CD8", "NK", "DC", "Monocyte")
+  
+  x <- sort(unique(x))
+  newX <- c()
+  
+  for (p in priority) {
+    pIndices <- grepl(p, x)
+    newX <- append(newX, x[pIndices])
+    x <- x[!pIndices]
+  }
+  
+  if (length(newX) > 0) {
+    newX <- append(newX, x)
+  }
+  
+  
+  return(newX)
+}
 
 
 wrapNewAnnotLevel <- function(p) {

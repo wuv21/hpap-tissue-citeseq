@@ -1,8 +1,9 @@
+# note that this code is written to be run from the project base directory
+
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
 library(Seurat)
 library(cowplot)
-# library(ggpubr)
 
 set.seed(42)
 
@@ -19,33 +20,11 @@ seu <- tryCatch(
     return(tmp)
 })
 
-# seu <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-12_16-27-41.rds")
-
-customSortAnnotation <- function(x) {
-  priority <- c("B", "CD4", "CD8", "NK", "DC", "Monocyte")
-  
-  x <- sort(unique(x))
-  newX <- c()
-  
-  for (p in priority) {
-    pIndices <- grepl(p, x)
-    newX <- append(newX, x[pIndices])
-    x <- x[!pIndices]
-  }
-  
-  if (length(newX) > 0) {
-    newX <- append(newX, x)
-  }
-  
-  
-  return(newX)
-}
 
 manualClusterOrder <- unique(seu$manualAnnot)
 manualClusterOrder <- factor(manualClusterOrder,
   levels = customSortAnnotation(manualClusterOrder),
   labels = stringr::str_trim(customSortAnnotation(manualClusterOrder)))
-
 
 ################################################################################
 # Figures A-C
@@ -130,17 +109,6 @@ frequencyDf <- data.frame(
   mutate(diseaseStatus = factor(diseaseStatus, levels = c("ND", "AAb+", "T1D"))) %>%
   mutate(cluster = factor(stringr::str_trim(cluster), levels = levels(manualClusterOrder)))
 
-# frequency of the clusters across tissues and disease
-# figD <- frequencyDf %>%
-#   group_by(cluster, tissue, diseaseStatus, donor) %>%
-#   summarize(nCells = n()) %>%
-#   group_by(donor, diseaseStatus, tissue) %>%
-#   mutate(propOfDiseaseStatus = nCells / sum(nCells)) %>%
-#   ggplot(aes(x = cluster, y = propOfDiseaseStatus, fill = diseaseStatus)) +
-#   geom_point(pch = 21, alpha = 0.7, color = "#000000", size = 2, position = position_dodge(width = 0.7)) +
-#   facet_wrap(~ tissue, ncol = 1) +
-#   theme(legend.position = "bottom")
-
 frequencyPlotTheme <- list(
   theme_bw(),
   coord_cartesian(clip = "off"),
@@ -153,12 +121,6 @@ frequencyPlotTheme <- list(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_rect(fill = NULL, colour = "#000000", size = 0.25)
-    # strip.text = element_text(color = "#000000", size = 6),
-    # strip.background = element_blank(),
-    # strip.placement = "inside",
-    # strip.clip = "off",
-    # panel.spacing = unit(0.1, "line")
-    # panel.grid.major.x = element_line(color = "#cccccc", linewidth = 2)
     ),
   guides(fill = "none",
     shape = guide_legend(
