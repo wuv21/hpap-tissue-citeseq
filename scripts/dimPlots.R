@@ -142,3 +142,38 @@ FeaturePlotCustom <- function(
   
   return(wrap_plots(full = featurePs, ncol = graphsPerRow))
 }
+
+FeaturePlotCustomPaged <- function(
+  seu,
+  reduction = "rna.umap",
+  markers,
+  modality,
+  graphsPerRow = 4,
+  rowsPerPage = 4,
+  tsa_catalog,
+  ...) {
+  
+  page_breaks = seq(1, length(markers), (graphsPerRow*rowsPerPage))
+  
+  plotIdxByPage = lapply(page_breaks, function(pb) {
+    r=seq(pb, pb+((graphsPerRow*rowsPerPage)-1), 1)
+    if (max(r) > length(markers)) {
+      r = seq(pb, length(markers), 1)
+    }
+    return(r)
+  })
+  markersByPage = lapply(plotIdxByPage, function(pp) markers[pp])
+  lapply(markersByPage, function(m) {
+    
+    FeaturePlotCustom(
+        seu = seu,
+        reduction = "rna.umap",
+        markers = m,
+        modality = modality,
+        graphsPerRow = graphsPerRow,
+        tsa_catalog = tsa_catalog,
+        ...
+    )
+  })
+}
+
