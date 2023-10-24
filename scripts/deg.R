@@ -1,7 +1,47 @@
 source("scripts/generic.R")
 set.seed(42)
 
-c("ND", "AAb+", "T1D")
+findMarkersCombinatorial <- function(
+  seuratObj,
+  combVar,
+  logfc.threshold = 0.1,
+  pAdjustMethod = "bonferroni",
+  ...
+) {
+  Idents(seuratObj) <- combVar
+  combs <- combn(unique(seuratObj@meta.data[, combVar]), 2)
+  
+  comparisons <- lapply(c(1:ncol(combs)), function(i) {
+    group1 <- as.character(combs[1, i])
+    group2 <- as.character(combs[2, i])
+    
+    comp <- paste0(group1, "_vs_", group2)
+    message(paste0("testing ", comp))
+    
+    deg <- FindMarkers(seu_pln_treg,
+      ident.1 = group1,
+      ident.2 = group2,
+      logfc.threshold = logfc.threshold,
+      ...)
+    
+    deg <- deg %>%
+      mutate(
+        gene = rownames(.),
+        upregulated = ifelse(avg_log2FC > 0, group1, group2),
+        matchup = comp
+      )
+    
+    rownames(deg) <- NULL
+    
+    return(deg)
+  }) 
+  
+  message("collating and correcting for multiple tests...")
+  comparisons <- bind_rows(comparisons) %>%
+    mutate(p_val_adj_all = p.adjust(p_val, method = pAdjustMethod))
+  
+  return(comparisons)
+}
 
 getPrestoResult <- function(
   seu,
