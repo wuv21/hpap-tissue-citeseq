@@ -18,7 +18,7 @@ findMarkersCombinatorial <- function(
     comp <- paste0(group1, "_vs_", group2)
     message(paste0("testing ", comp))
     
-    deg <- FindMarkers(seu_pln_treg,
+    deg <- FindMarkers(seuratObj,
       ident.1 = group1,
       ident.2 = group2,
       logfc.threshold = logfc.threshold,
