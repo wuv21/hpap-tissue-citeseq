@@ -21,7 +21,8 @@ DimPlotCustom <- function(
   groupByTitles = groupBy,
   minimalTheme = TRUE,
   nLegendCols = 5,
-  nCols = NULL
+  nCols = NULL,
+  ...
 ) {
   if (!(is.vector(groupBy) && is.atomic(groupBy))) {
     groupBy = c(groupBy)
@@ -36,7 +37,7 @@ DimPlotCustom <- function(
   names(groupByTitles) <- groupBy
   
   listP <- lapply(groupBy, function(x) {
-    p <- DimPlot(seu, reduction = reduction, group.by = x) +
+    p <- DimPlot(seu, reduction = reduction, group.by = x, ...) +
       labs(title = groupByTitles[x]) +
       minimalDimPlotTheme +
       guides(color = guide_legend(ncol = nLegendCols))
@@ -57,7 +58,8 @@ smallMultipleUmaps <- function(
   height = 6,
   width = 10,
   ncol = 8,
-  titleWrapNChars = 20
+  titleWrapNChars = 20,
+  return_figures = FALSE
 ) {
   
   colOfInterest <- FetchData(seu, parameter)
@@ -85,13 +87,18 @@ smallMultipleUmaps <- function(
     return(p)
   })
   
-  savePlot(
-    smallUmaps,
-    fn = filename,
-    customSavePlot = patchwork::wrap_plots(smallUmaps, ncol = ncol),
-    devices = devices,
-    gheight = height,
-    gwidth = width)
+  if (!return_figures) {
+    savePlot(
+      smallUmaps,
+      fn = filename,
+      customSavePlot = patchwork::wrap_plots(smallUmaps, ncol = ncol),
+      devices = devices,
+      gheight = height,
+      gwidth = width)
+  } else {
+    message("Returning list of plots.")
+    return(smallUmaps, ncol = ncol)
+  }
 }
 
 
@@ -142,3 +149,38 @@ FeaturePlotCustom <- function(
   
   return(wrap_plots(full = featurePs, ncol = graphsPerRow))
 }
+
+FeaturePlotCustomPaged <- function(
+  seu,
+  reduction = "rna.umap",
+  markers,
+  modality,
+  graphsPerRow = 4,
+  rowsPerPage = 4,
+  tsa_catalog,
+  ...) {
+  
+  page_breaks = seq(1, length(markers), (graphsPerRow*rowsPerPage))
+  
+  plotIdxByPage = lapply(page_breaks, function(pb) {
+    r=seq(pb, pb+((graphsPerRow*rowsPerPage)-1), 1)
+    if (max(r) > length(markers)) {
+      r = seq(pb, length(markers), 1)
+    }
+    return(r)
+  })
+  markersByPage = lapply(plotIdxByPage, function(pp) markers[pp])
+  lapply(markersByPage, function(m) {
+    
+    FeaturePlotCustom(
+        seu = seu,
+        reduction = "rna.umap",
+        markers = m,
+        modality = modality,
+        graphsPerRow = graphsPerRow,
+        tsa_catalog = tsa_catalog,
+        ...
+    )
+  })
+}
+
