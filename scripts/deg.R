@@ -4,10 +4,16 @@ set.seed(42)
 findMarkersCombinatorial <- function(
   seuratObj,
   combVar,
+  assay = NULL,
   logfc.threshold = 0.1,
   pAdjustMethod = "bonferroni",
   ...
 ) {
+  if (!is.null(assay) && DefaultAssay(seuratObj) != assay) {
+    message(sprintf("Switching Assay to: %s", assay)) 
+    DefaultAssay(seuratObj) = assay
+  }
+
   Idents(seuratObj) <- combVar
   combs <- combn(unique(seuratObj@meta.data[, combVar]), 2)
   
@@ -17,7 +23,6 @@ findMarkersCombinatorial <- function(
     
     comp <- paste0(group1, "_vs_", group2)
     message(paste0("testing ", comp))
-    
     deg <- FindMarkers(seuratObj,
       ident.1 = group1,
       ident.2 = group2,
@@ -35,6 +40,9 @@ findMarkersCombinatorial <- function(
     
     return(deg)
   }) 
+
+  #Remove any row-less elements
+
   
   message("collating and correcting for multiple tests...")
   comparisons <- bind_rows(comparisons) %>%
