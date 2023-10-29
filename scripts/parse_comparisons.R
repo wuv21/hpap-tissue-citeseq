@@ -30,6 +30,53 @@ expand_comparisons_base = function(genelist) {
   out
 }
 
+seuratObjMetaTibble = function(so, assay = NULL, slot = "data", barcodeVar = "cell") {
+  if (!is.null(assay)) {
+    DefaultAssay(so) = assay
+  }
+  as_tibble(t(as.matrix(GetAssayData(so))) %>% left_join(so[[]]), rownames = "cell")
+}
+
+percent_expressing = function(sotib, compareVar, annotVar, zero = 0, barcodeVar = "cell") {
+  sotib %>%
+    select(-{{ barcodeVar }}) %>%
+    group_by({{ compareVar }}, {{ annotVar}}) %>%
+    summarize_all(function(x) length(which(x > zero))/length(x)) %>%
+    pivot_longer(cols=-c(compareVar, annotVar), names_to = "feature", values_to = "pctexp") %>%
+    pivot_wider(names_from = compareVar, values_from = "pctexp") %>%
+    select({{ annotVar }}, feature, unique({{ compareVar }}))
+}
+mean_expression = function(sotib, compareVar, annotVar, barcodeVar = "cell") {
+  sotib %>%
+    select({{ barcodeVar }}) %>%
+    group_by({{ compareVar }}, {{ annotVar }}) %>%
+    summarize_all(mean)
+}
+
+# I think that `by` and `annotVar` should be talking about the same variable, which they are now... but check
+scale_expression = function(sotib, compareVar, by, barcodeVar = "cell") {
+  lapply(unique(by), function(xx) {
+           out = sotib[which(sotib[[annotVar]] == xx),]
+           rownames(out) = sprintf("(%s) %s", out[[compareVar]], out[[by]])
+           out = out[,-c(1,2)]
+           out = t(scale(as.matrix(out)))
+
+           #Check and see if this is necessary
+           attr(out, "cluster") = xx
+
+           out
+  })
+}
+
+#thing=c("ah", "bah")
+#strvar="thing"
+#t=as_tibble(do.call(cbind, lapply(1:3, function(x) rnorm(5))))
+#strvar = "V2"
+#t %>% select({{ strvar }})
+#rnorm(5)
+#print(sym(strvar))
+#?sym
+
 expand_comparisons_base_short = function(genelist, clusters) {
   
   # Expand rows by semicolon-separated comparison column

@@ -59,21 +59,23 @@ ht_opt$TITLE_PADDING = unit(c(8.5, 8.5), "points")
 
 ##### B cells #####
 goi = tibble::as_tibble(read.table("HPAP_CITEseq_gene_list_V3.csv", sep = ',', header=TRUE, row.names=NULL, fill = NA))
+
 so = readRDS("../seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
-so_pln_only = subset(so, Tissue %in% c("pLN-H", "pLN-T"))
+
+so_pln_only = readRDS("rds/so_pln_only.rds")
+so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
+
 clusters = unique(so[["manualAnnot"]])
 bcell_clusters = clusters[which(startsWith(clusters[,1], "B")),1]
 nk_clusters = c("NK", "NK/ILC")
 
-so[["groupedAnnot"]] = ifelse(so[["manualAnnot"]][,1] %in% bcell_clusters, "All B Cells combined", NA)
-so[["groupedAnnot"]] = ifelse(so[["manualAnnot"]][,1] %in% nk_clusters, "All NK Cells combined", so[["groupedAnnot"]][,1])
 
-so_pln_only = subset(so, Tissue %in% c("pLN-H", "pLN-T"))
 ### All b cell as a single cluster
 #compres = readRDS("rds/cluster_groups_comparisons_and_results_V3.rds")
 #compres
 #clusters = readRDS("rds/cluster_groups_nk_bcell_clusters.rds")
 
+compareVar = "Disease_Status"
 annotVar = "manualAnnot"
 
 ### All b cell clusters handled separately 
@@ -82,7 +84,6 @@ clusters = readRDS("rds/individual_clusters_nk_bcell_clusters.rds")
 
 bcell_clust = clusters %>% filter(cgroup == "all B cell clusters")
 nk_clust = clusters %>% filter(cgroup == "NK, NK/ILC")
-unique(so[["manualAnnot"]])
 
 Seurat::DefaultAssay(so_pln_only) = "RNA"
 wuv_compres_rna = readRDS("rds/wuv_compres_rna_bcellsep_genelist_V3.rds")
@@ -90,10 +91,28 @@ rna_genes = goi[goi$Heatmap == 2,]$gene
 #rna_genes = get_genes(compres, so, "RNA", bcell_clust$cluster)
 rna_genes
 
+### For Seurat object...
+# colnames are cells
+# rownames are features
+###
+
+# These should both do the same thing, but just keep as a Seurat oblect for now (below)... if it works
 hmplt = Seurat::GetAssayData(so_pln_only, slot="data")[which(rownames(so_pln_only) %in% rna_genes),]
+hmplt = Seurat::GetAssayData(so_pln_only, slot="data")[rna_genes,]
+
+# Keep as Seurat object to make downstream simpler
+hmplt = so_pln_only[rna_genes,]
+
+# Are these really the same thing?? That sure would make me look dumb
+hmplt = subset(hmplt, {{ annotVar }} %in% bcell_clust$cluster)
 hmplt = hmplt[,which(colnames(so_pln_only) %in% rownames(so_pln_only[[]])[which(so_pln_only[[annotVar]][,1] %in% bcell_clust$cluster)])]
+
+# These should both do the same thing
 hmplt_data = as_tibble(t(as.matrix(hmplt)), rownames="cell") %>% left_join(as_tibble(so_pln_only[[c(annotVar, "Disease_Status")]], rownames="cell")) 
-hmplt_data
+hmplt_data = seuratObjMetaTibble(hmplt, assay = "RNA")
+
+# These should both do the same thing
+rna_pctexp = percent_expressing(hmplt_data, compareVar, annotVar, zero = 0.0)
 rna_pctexp = hmplt_data %>%
   select(-c(cell)) %>%
   group_by(Disease_Status, !!sym(annotVar)) %>%
@@ -101,6 +120,9 @@ rna_pctexp = hmplt_data %>%
   pivot_longer(cols=-c(annotVar, "Disease_Status"), names_to = "feature", values_to = "pctexp") %>%
   pivot_wider(names_from = "Disease_Status", values_from = "pctexp") %>%
   select(!!sym(annotVar), feature, ND, 'AAb+', T1D)
+
+# These should both do the same thing
+rna_meanExp = as.data.frame(mean_expression(hmplt_data))
 hmplt_meanExp = hmplt_data %>%
   select(-c(cell)) %>%
   group_by(Disease_Status, !!sym(annotVar)) %>%
@@ -108,22 +130,23 @@ hmplt_meanExp = hmplt_data %>%
   as.data.frame
 hmplt_meanExp
 
+# These should both do the same thing (the first line compared to the rest of the lines
+hmplt_scaledExp = scale_expression(sotib, compareVar = compareVar, by = annotVar)
 ds = c("AAb+", "ND", "T1D")
 bc = bcell_clust$cluster
 bc
+hmplt_scaledExp
 hmplt_scaledExp = lapply(bc, function(xx) {
                            out = hmplt_meanExp[which(hmplt_meanExp$groupedAnnot == xx),]
-                           #rnames = hmplt_meanExp[keep,2]
-                           #print(rnames)
                            rownames(out) = sprintf("(%s) %s", out$Disease_Status, out$groupedAnnot)
                            out = out[,-c(1,2)]
-                           #out = out[,keep]
-                           #colnames(out) = rnames
                            out = t(scale(as.matrix(out)))
                            attr(out, "cluster") = xx
                            out
 })
+
 hmplt_scaledExp
+
 rna_pvalues = lapply(hmplt_scaledExp, fill_pvalues_from_wuv, modality="RNA")
 rna_pvalues
 
