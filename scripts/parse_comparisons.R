@@ -34,27 +34,31 @@ seuratObjMetaTibble = function(so, assay = NULL, slot = "data", barcodeVar = "ce
   if (!is.null(assay)) {
     DefaultAssay(so) = assay
   }
-  as_tibble(t(as.matrix(GetAssayData(so))) %>% left_join(so[[]]), rownames = "cell")
+  ret = as_tibble(t(as.matrix(GetAssayData(so))), rownames = "cell") %>% left_join(as_tibble(so[[]], rownames="cell"))
+  attr(ret, "datacol") = seq_along(rownames(so))+1
+  ret
 }
 
 percent_expressing = function(sotib, compareVar, annotVar, zero = 0, barcodeVar = "cell") {
+  sotib = sotib[,c(barcodeVar, colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
   sotib %>%
     select(-{{ barcodeVar }}) %>%
-    group_by({{ compareVar }}, {{ annotVar}}) %>%
+    group_by(.data[[compareVar]], .data[[annotVar]]) %>%
     summarize_all(function(x) length(which(x > zero))/length(x)) %>%
     pivot_longer(cols=-c(compareVar, annotVar), names_to = "feature", values_to = "pctexp") %>%
     pivot_wider(names_from = compareVar, values_from = "pctexp") %>%
-    select({{ annotVar }}, feature, unique({{ compareVar }}))
+    select({{ annotVar }}, feature, unique(sotib[[compareVar]]))
 }
 mean_expression = function(sotib, compareVar, annotVar, barcodeVar = "cell") {
+  sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
   sotib %>%
-    select({{ barcodeVar }}) %>%
-    group_by({{ compareVar }}, {{ annotVar }}) %>%
+    group_by(.data[[compareVar]], .data[[annotVar]]) %>%
     summarize_all(mean)
 }
 
 # I think that `by` and `annotVar` should be talking about the same variable, which they are now... but check
 scale_expression = function(sotib, compareVar, by, barcodeVar = "cell") {
+  sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
   lapply(unique(by), function(xx) {
            out = sotib[which(sotib[[annotVar]] == xx),]
            rownames(out) = sprintf("(%s) %s", out[[compareVar]], out[[by]])

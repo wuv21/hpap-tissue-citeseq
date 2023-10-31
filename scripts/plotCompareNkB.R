@@ -35,7 +35,7 @@ FeaturePlotCustomPaged(so, markers = bcell_rna$feature, modality = "RNA", graphs
 dev.off()
 
 sig = deg %>%
-  filter(modality == "RNA") %>%
+  filter(modality == "RNAn") %>%
   filter(cluster == "all B cell clusters") %>%
   pivot_wider(id_cols = c("feature"), names_from="comparison", values_from="avg_log2FC") 
 for (r in seq_along(sig[,1])) {
@@ -62,12 +62,17 @@ goi = tibble::as_tibble(read.table("HPAP_CITEseq_gene_list_V3.csv", sep = ',', h
 
 so = readRDS("../seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
 
-so_pln_only = readRDS("rds/so_pln_only.rds")
-so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
-
 clusters = unique(so[["manualAnnot"]])
 bcell_clusters = clusters[which(startsWith(clusters[,1], "B")),1]
 nk_clusters = c("NK", "NK/ILC")
+
+convert = c(rep("All B cells combined", length(bcell_clusters)), rep("All NK Cells combined", length(nk_clusters)))
+names(convert)=c(bcell_clusters, nk_clusters)
+convert
+
+so_pln_only = readRDS("rds/so_pln_only.rds")
+so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
+
 
 
 ### All b cell as a single cluster
@@ -97,23 +102,27 @@ rna_genes
 ###
 
 # These should both do the same thing, but just keep as a Seurat oblect for now (below)... if it works
-hmplt = Seurat::GetAssayData(so_pln_only, slot="data")[which(rownames(so_pln_only) %in% rna_genes),]
-hmplt = Seurat::GetAssayData(so_pln_only, slot="data")[rna_genes,]
+#hmplt = Seurat::GetAssayData(so_pln_only, slot="data")[which(rownames(so_pln_only) %in% rna_genes),]
+#hmplt = Seurat::GetAssayData(so_pln_only[rna_genes,]
 
 # Keep as Seurat object to make downstream simpler
 hmplt = so_pln_only[rna_genes,]
+hmplt
 
+colnames(hmplt[[]])
 # Are these really the same thing?? That sure would make me look dumb
-hmplt = subset(hmplt, {{ annotVar }} %in% bcell_clust$cluster)
+hmplt = subset(hmplt, !!sym(annotVar) %in% bcell_clust$cluster)
 hmplt = hmplt[,which(colnames(so_pln_only) %in% rownames(so_pln_only[[]])[which(so_pln_only[[annotVar]][,1] %in% bcell_clust$cluster)])]
 
 # These should both do the same thing
 hmplt_data = as_tibble(t(as.matrix(hmplt)), rownames="cell") %>% left_join(as_tibble(so_pln_only[[c(annotVar, "Disease_Status")]], rownames="cell")) 
 hmplt_data = seuratObjMetaTibble(hmplt, assay = "RNA")
 
+attr(hmplt_data, "datacol") = 1:10
+attr(hmplt_data, "datacol")
 # These should both do the same thing
 rna_pctexp = percent_expressing(hmplt_data, compareVar, annotVar, zero = 0.0)
-rna_pctexp = hmplt_data %>%
+rnna_pctexp = hmplt_data %>%
   select(-c(cell)) %>%
   group_by(Disease_Status, !!sym(annotVar)) %>%
   summarize_all(function(x) length(which(x != 0))/length(x)) %>%
@@ -122,7 +131,11 @@ rna_pctexp = hmplt_data %>%
   select(!!sym(annotVar), feature, ND, 'AAb+', T1D)
 
 # These should both do the same thing
-rna_meanExp = as.data.frame(mean_expression(hmplt_data))
+attr(hmplt_data, "datacol")
+rna_meanExp = as.data.frame(mean_expression(hmplt_data, compareVar, annotVar))
+dim(rna_meanExp)
+warnings()
+rna_meanExp
 hmplt_meanExp = hmplt_data %>%
   select(-c(cell)) %>%
   group_by(Disease_Status, !!sym(annotVar)) %>%
