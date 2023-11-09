@@ -188,18 +188,52 @@ plotCleanMA <- function(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+plotCombinatorialDEGLollipop <- function(combMarkersRes, title) {
+  df <- combMarkersRes %>%
+    group_by(matchup, upregulated) %>%
+    # mutate(piscore = -1 * log10(p_val_adj_all) * avg_log2FC) %>%
+    filter(p_val_adj_all < 0.05) %>%
+    slice_max(abs(avg_log2FC), n = 20) %>%
+    group_by(matchup) %>%
+    arrange(desc(avg_log2FC), .by_group = TRUE)
+  
+  maxCounts <- df %>%
+    summarize(groupCounts = n())
+  maxCounts <- ceiling(log10(max(maxCounts$groupCounts))) + 1
+  
+  df <- df %>%
+    mutate(facet_gene_number = cur_group_id() * (10 ** maxCounts) + row_number()) %>%
+    mutate(facet_gene_number = paste0(facet_gene_number, "_", gene)) %>%
+    mutate(facet_gene_number = factor(facet_gene_number, levels = stringr::str_sort(facet_gene_number, numeric = TRUE)))
+  
+  print(df %>%
+      select(avg_log2FC, facet_gene_number, gene, matchup) %>%
+      slice_max(abs(avg_log2FC), n = 5) %>%
+      arrange(avg_log2FC, .by_group = TRUE))
+  
+  p <- df %>%
+    {
+      ggplot(., aes(y = facet_gene_number, x = avg_log2FC, color = upregulated)) +
+        geom_point() +
+        geom_vline(xintercept = 0) +
+        scale_color_manual(values = COLORS[["disease"]]) +
+        scale_y_discrete(labels = function(x) gsub("\\d+_", "", x)) +
+        facet_wrap(~ matchup, nrow = 1, scales = "free") +
+        theme_bw() +
+        theme(
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          strip.background = element_blank()) +
+        labs(
+          color = "Disease",
+          y = "Gene",
+          x = "Average log2 Fold Change",
+          title = title
+        )
+    }
+  
+  return(p)
+}
 
 
 volcanoPlotTheme <- theme(

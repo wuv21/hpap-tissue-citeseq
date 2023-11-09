@@ -10,7 +10,19 @@ suppressMessages(library(ComplexHeatmap))
 
 COLORS <- list(
   "disease" = c("ND" = "#949494", "AAb+" = "#2E96FF", "T1D" = "#FF8B3D"),
-  "tissue" = c("pLN" = "#0777B6", "mesLN" = "#73A942", "Spleen" = "#BC4749")
+  "tissue" = c("pLN" = "#0777B6", "mLN" = "#73A942", "Spleen" = "#BC4749"),
+  "tissue_detailed" = 
+    c("Spleen" = "#BC4749",
+      "SMA mLN" = "#228B22",
+      "MES mLN" = "#73A942",
+      "Head pLN" = "#023E8A",
+      "Body pLN" = "#0777B6",
+      "Tail pLN" = "#00B4D8"),
+  "expanded_palette" = c(
+    '#D0D586', '#687FE0','#E2B2DD','#7B9280','#7AE551','#85ADE0','#DE5AB9',
+    '#C4E8C5','#D6DF4F','#E35D76','#8B6684','#CFD9E2','#A965DB','#C88BD8',
+    '#DEB5A6','#DF9151','#72DE9A','#D846E3','#743BDF','#72DCDF'),
+  "pval-heatmap" = c("ns" = "#dadaeb", "*" = "#b3cde3", "**" = "#8c96c6", "***" = "#88419d")
 )
 
 plotTagTheme <- theme(
@@ -28,7 +40,6 @@ subplotTheme <- theme(
 )
 
 umapPlotThemeNoLeg <- list(
-  # coord_fixed(),
   theme(
     aspect.ratio = 1,
     legend.position = "none",
@@ -74,10 +85,11 @@ unclipStripText <- function(g) {
 }
 
 saveFinalFigure <- function(
-    plot,
+  plot,
   prefixDir = "../outs",
   fn,
   devices = c("png", "pdf"),
+  addTimestamp = FALSE,
   gheight,
   gwidth) {
   
@@ -85,8 +97,17 @@ saveFinalFigure <- function(
     devices <- c(devices)
   }
   
+
   for (d in devices) {
-    gfn <- glue("{prefixDir}/{d}/{fn}.{d}")
+    
+    if (addTimestamp) {
+      currentTime <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+      gfn <- glue("{prefixDir}/{d}/{fn}_{currentTime}.{d}")
+      
+    } else {
+      gfn <- glue("{prefixDir}/{d}/{fn}.{d}")
+    }
+    
     
     if (d == "rds") {
       saveRDS(plot, gfn)
