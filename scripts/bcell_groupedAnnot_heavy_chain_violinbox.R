@@ -70,27 +70,6 @@ pvalues2pubr = function(pvalues, gene, xlvl, bracketx) {
   }
   return(do.call(rbind, out))
 }
-#### BAR chart
-#toplt_exp = rna_stderr_bars %>%
-#  mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
-#toplt_exp
-#pdf("/srv/http/betts/hpap/figures/bcell_heavychain_bars_mean_sdbar.pdf", width = 11, height=8)
-#for (g in genes_of_interest) {
-#  print(g)
-#  print(ggplot(toplt_exp %>% filter(Gene == g), aes(x = !!sym(ANNOTVAR), y = mid, fill = Disease_Status)) +
-#    geom_bar(color = "black", stat = "identity", position = "dodge") +
-#    geom_errorbar(aes(ymin = mid, ymax = ymax), position = position_dodge(0.9), width = 0) +
-#    scale_fill_manual(values=unname(DISEASESTATUSCOLORS)) +
-#    ylab("Normalized Expression (median)")+
-#    theme_bw() +
-#    theme(
-#          axis.text.x = element_text(angle= 90),
-#          panel.grid = element_blank()
-#    ))
-#}
-#pltData
-#dev.off()
-#
 
 vioplt = pltData %>% 
   select("cell", COMPAREVAR, ANNOTVAR, colnames(pltData)[attr(pltData, "datacol")]) %>%

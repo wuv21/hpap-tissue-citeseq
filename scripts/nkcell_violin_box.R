@@ -54,38 +54,6 @@ compres_list
 rna_pvalues = lapply(rna_scaledExp, fillPvalsFromFindFeaturesCombinatorial, compres_list, modality="RNA")
 rna_pvalues
 
-pvalues2pubr = function(pvalues, gene, bracketx) {
-  recast = as_tibble(do.call(rbind, lapply(names(pvalues[[1]][g,]), function(n) c(strsplit(n, "[-]")[[1]], pvalues[[1]][g,n]))))
-  colnames(recast) = c("group1", "group2", "p.signif")
-  recast$group1x = sapply(recast$group1, function(x) bracketx[x])
-  recast$group2x = sapply(recast$group2, function(x) bracketx[x])
-  recast$p.signif = as.numeric(recast$p.signif)
-  recast$p.sym = pValSymnum(recast$p.signif)
-  recast$p.sym = ifelse(is.na(recast$p.sym), "ns", recast$p.sym)
-  recast
-}
-#### BAR chart
-#toplt_exp = rna_stderr_bars %>%
-#  mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
-#toplt_exp
-#pdf("/srv/http/betts/hpap/figures/bcell_heavychain_bars_mean_sdbar.pdf", width = 11, height=8)
-#for (g in genes_of_interest) {
-#  print(g)
-#  print(ggplot(toplt_exp %>% filter(Gene == g), aes(x = !!sym(ANNOTVAR), y = mid, fill = Disease_Status)) +
-#    geom_bar(color = "black", stat = "identity", position = "dodge") +
-#    geom_errorbar(aes(ymin = mid, ymax = ymax), position = position_dodge(0.9), width = 0) +
-#    scale_fill_manual(values=unname(DISEASESTATUSCOLORS)) +
-#    ylab("Normalized Expression (median)")+
-#    theme_bw() +
-#    theme(
-#          axis.text.x = element_text(angle= 90),
-#          panel.grid = element_blank()
-#    ))
-#}
-#pltData
-#dev.off()
-#
-
 vioplt = pltData %>% 
   select("cell", COMPAREVAR, ANNOTVAR, colnames(pltData)[attr(pltData, "datacol")]) %>%
   pivot_longer(cols = !c("cell", COMPAREVAR, ANNOTVAR), names_to = "Gene", values_to = "normalized_expression") %>%
