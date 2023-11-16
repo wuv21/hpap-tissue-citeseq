@@ -1,0 +1,375 @@
+gene_name,module,cell_population,compare_across_all_cell_pops,group,module summary
+FOXP1,T1D-M10,all,TRUE,1,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+VIM,T1D-M11,all,TRUE,2,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+NFAT5,T1D-M12,Monocyte #2,TRUE,3,module: regulation of T cell activation / B cell differentation
+NFAT5,T1D-M12,NK,TRUE,3,module: regulation of T cell activation / B cell differentation
+NFAT5,T1D-M12,NK/ILC,TRUE,3,module: regulation of T cell activation / B cell differentation
+NFAT5,T1D-M12,CD8 naive #1,TRUE,3,module: regulation of T cell activation / B cell differentation
+NFAT5,T1D-M12,CD4 naive #1,TRUE,3,module: regulation of T cell activation / B cell differentation
+BRAF,T1D-M12,Monocyte #2,FALSE,,module: regulation of T cell activation / B cell differentation
+BRAF,T1D-M12,NK,FALSE,,module: regulation of T cell activation / B cell differentation
+BRAF,T1D-M12,NK/ILC,FALSE,,module: regulation of T cell activation / B cell differentation
+BRAF,T1D-M12,CD8 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+BRAF,T1D-M12,CD4 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+NFKB1,T1D-M12,Monocyte #2,FALSE,,module: regulation of T cell activation / B cell differentation
+NFKB1,T1D-M12,NK,FALSE,,module: regulation of T cell activation / B cell differentation
+NFKB1,T1D-M12,NK/ILC,FALSE,,module: regulation of T cell activation / B cell differentation
+NFKB1,T1D-M12,CD8 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+NFKB1,T1D-M12,CD4 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+FBXO11,T1D-M12,Monocyte #2,FALSE,,module: regulation of T cell activation / B cell differentation
+FBXO11,T1D-M12,NK,FALSE,,module: regulation of T cell activation / B cell differentation
+FBXO11,T1D-M12,NK/ILC,FALSE,,module: regulation of T cell activation / B cell differentation
+FBXO11,T1D-M12,CD8 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+FBXO11,T1D-M12,CD4 naive #1,FALSE,,module: regulation of T cell activation / B cell differentation
+IFNAR2,T1D-M13,all,TRUE,4,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+TXK,T1D-M15,CD4 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD4 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD4 Tcm/Tem,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD4 Tcm/Treg,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD4 Tem/activated,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 gdT/Helios+,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 Tem/Temra,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 Tem/Trm #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,CD8 Tem/Trm #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+TXK,T1D-M15,NK/ILC,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD4 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD4 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD4 Tcm/Tem,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD4 Tcm/Treg,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD4 Tem/activated,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 gdT/Helios+,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 Tem/Temra,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 Tem/Trm #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,CD8 Tem/Trm #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+FKBP5,T1D-M15,NK/ILC,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD4 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD4 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD4 Tcm/Tem,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD4 Tcm/Treg,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD4 Tem/activated,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 gdT/Helios+,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 Tem/Temra,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 Tem/Trm #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,CD8 Tem/Trm #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+IKZF1,T1D-M15,NK/ILC,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD4 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD4 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD4 Tcm/Tem,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD4 Tcm/Treg,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD4 Tem/activated,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 gdT/Helios+,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 naive #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 naive #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 Tem/Temra,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 Tem/Trm #1,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,CD8 Tem/Trm #2,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+SEMA4D,T1D-M15,NK/ILC,FALSE,,"module: T cell and IFN signaling, lymphocyte development"
+ASH1L,T1D-M16,NK,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,NK/ILC,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,B plasma cell/plasmablast,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,B Tbet+/ABCs,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD4 naive #1,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD4 naive #2,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD4 Tcm/Tem,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD4 Tcm/Treg,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD4 Tem/activated,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 gdT/Helios+,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 naive #1,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 naive #2,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 Tem/Temra,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 Tem/Trm #1,FALSE,,module: epigenetic modulators of inflammation
+ASH1L,T1D-M16,CD8 Tem/Trm #2,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,NK,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,NK/ILC,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,B plasma cell/plasmablast,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,B Tbet+/ABCs,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD4 naive #1,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD4 naive #2,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD4 Tcm/Tem,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD4 Tcm/Treg,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD4 Tem/activated,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 gdT/Helios+,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 naive #1,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 naive #2,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 Tem/Temra,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 Tem/Trm #1,FALSE,,module: epigenetic modulators of inflammation
+KANSL1,T1D-M16,CD8 Tem/Trm #2,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,NK,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,NK/ILC,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,B plasma cell/plasmablast,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,B Tbet+/ABCs,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD4 naive #1,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD4 naive #2,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD4 Tcm/Tem,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD4 Tcm/Treg,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD4 Tem/activated,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 gdT/Helios+,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 naive #1,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 naive #2,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 Tem/Temra,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 Tem/Trm #1,FALSE,,module: epigenetic modulators of inflammation
+ZEB1,T1D-M16,CD8 Tem/Trm #2,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,NK,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,NK/ILC,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,B plasma cell/plasmablast,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,B Tbet+/ABCs,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD4 naive #1,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD4 naive #2,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD4 Tcm/Tem,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD4 Tcm/Treg,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD4 Tem/activated,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 gdT/Helios+,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 naive #1,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 naive #2,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 Tem/Temra,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 Tem/Trm #1,FALSE,,module: epigenetic modulators of inflammation
+SETD2,T1D-M16,CD8 Tem/Trm #2,FALSE,,module: epigenetic modulators of inflammation
+NFATC2,T1D-M17,all,TRUE,3,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+CD44,T1D-M2,all,TRUE,7,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+CAMK1D,T1D-M2,all,TRUE,5,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+SIK3,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+SIK3,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+ARID4B,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+DYRK1A,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+CHD2,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+KDM6A,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,Monocyte #2,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,NK,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,NK/ILC,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,CD4 Tcm/Tem,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,CD4 Tcm/Treg,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,CD4 Tem/activated,FALSE,,module: cell signaling and epigenetic remodeling
+CHD1,T1D-M5,B plasma cell/plasmablast,FALSE,,module: cell signaling and epigenetic remodeling
+CAMK4,T1D-M6,CD8 Tem/Temra,TRUE,5,"module: TCR signaling/function, T cell function"
+CAMK4,T1D-M6,CD8 Tem/Trm #1,TRUE,5,"module: TCR signaling/function, T cell function"
+CAMK4,T1D-M6,CD8 Tem/Trm #2,TRUE,5,"module: TCR signaling/function, T cell function"
+IL7R,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+IL7R,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+IL7R,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD247,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD247,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD247,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+FYB1,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+FYB1,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+FYB1,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+ITK,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+ITK,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+ITK,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+LEF1,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+LEF1,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+LEF1,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD3D,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD3D,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD3D,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD2,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD2,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD2,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD3E,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD3E,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD3E,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD6,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD6,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD6,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+TRAC,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+TRAC,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+TRAC,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD96,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD96,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD96,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CD3G,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+CD3G,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+CD3G,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+PTPRC,T1D-M6,CD8 Tem/Temra,FALSE,,"module: TCR signaling/function, T cell function"
+PTPRC,T1D-M6,CD8 Tem/Trm #1,FALSE,,"module: TCR signaling/function, T cell function"
+PTPRC,T1D-M6,CD8 Tem/Trm #2,FALSE,,"module: TCR signaling/function, T cell function"
+CCL5,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CCL5,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NIBAN1,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CST7,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRD1,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+STAT4,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+NKG7,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRK1,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+KLRB1,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,NK/ILC,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD8 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD8 Tem/Temra,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD4 naive #1,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD4 naive #2,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD4 Tem/activated,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+ITGA1,T1D-M7,CD8 gdT/Helios+,FALSE,,module: cytotoxicity and pro-inflammatory signaling
+CD74,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+CD74,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+HLA-DRA,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+HLA-DRB1,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+CD79A,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+MS4A1,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD4 Tcm/Tem,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD4 Tcm/Treg,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD4 Tem/activated,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD8 Tem/Temra,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD8 Tem/Trm #1,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,CD8 Tem/Trm #2,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B plasma cell/plasmablast,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B class-switched memory #1,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B class-switched memory #2,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B IgM+ memory #2,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B IgM+ memory #3,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B IgM+ memory #4,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B IgM+ memory/marginal zone like #1,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B IgM+ memory/marginal zone like #2,FALSE,,module: MHC-II and B cell function
+SWAP70,T1D-M8,B Tbet+/ABCs,FALSE,,module: MHC-II and B cell function
+FLI1,T1D-M9,all,TRUE,6,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+CAMK2D,T1D-M9,all,TRUE,5,"gene of interest (gene family seen across modules, or gene seen across analyses)"
+NFATC3,T1D-M9,all,TRUE,3,"gene of interest (gene family seen across modules, or gene seen across analyses)"
