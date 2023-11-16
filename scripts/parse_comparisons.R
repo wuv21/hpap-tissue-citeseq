@@ -1,11 +1,5 @@
 library(Seurat)
 
-
-soAddGroupedAnnotVar = function(so, annotVar, groupedAnnotVar, convert) {
-  so[[groupedAnnotVar]] = unname(sapply(so[[annotVar]][,1], function(old) convert[old]))
-  so
-}
-
 split_column_list = function(cc) { 
   data.frame(id1 = sapply(cc, function(x) x[1]), id2 = sapply(cc, function(x) x[2]))
 }
@@ -29,57 +23,6 @@ expand_comparisons_base = function(genelist) {
   out<-cbind(genelist[expanded_row_indices,],'id'=t(do.call(cbind,combos)))
   out
 }
-
-seuratObjMetaTibble = function(so, assay = NULL, slot = "data", barcodeVar = "cell") {
-  if (!is.null(assay)) {
-    DefaultAssay(so) = assay
-  }
-  ret = as_tibble(t(as.matrix(GetAssayData(so))), rownames = "cell") %>% left_join(as_tibble(so[[]], rownames="cell"))
-  attr(ret, "datacol") = seq_along(rownames(so))+1
-  ret
-}
-
-percent_expressing = function(sotib, compareVar, annotVar, zero = 0, barcodeVar = "cell") {
-  sotib = sotib[,c(barcodeVar, colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
-  sotib %>%
-    select(-{{ barcodeVar }}) %>%
-    group_by(.data[[compareVar]], .data[[annotVar]]) %>%
-    summarize_all(function(x) length(which(x > zero))/length(x)) %>%
-    pivot_longer(cols=-c(compareVar, annotVar), names_to = "feature", values_to = "pctexp") %>%
-    pivot_wider(names_from = compareVar, values_from = "pctexp") %>%
-    select({{ annotVar }}, feature, unique(sotib[[compareVar]]))
-}
-mean_expression = function(sotib, compareVar, annotVar, barcodeVar = "cell") {
-  sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
-  sotib %>%
-    group_by(.data[[compareVar]], .data[[annotVar]]) %>%
-    summarize_all(mean)
-}
-
-# I think that `by` and `annotVar` should be talking about the same variable, which they are now... but check
-scale_expression = function(sotib, compareVar, by, barcodeVar = "cell") {
-  sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
-  lapply(unique(by), function(xx) {
-           out = sotib[which(sotib[[annotVar]] == xx),]
-           rownames(out) = sprintf("(%s) %s", out[[compareVar]], out[[by]])
-           out = out[,-c(1,2)]
-           out = t(scale(as.matrix(out)))
-
-           #Check and see if this is necessary
-           attr(out, "cluster") = xx
-
-           out
-  })
-}
-
-#thing=c("ah", "bah")
-#strvar="thing"
-#t=as_tibble(do.call(cbind, lapply(1:3, function(x) rnorm(5))))
-#strvar = "V2"
-#t %>% select({{ strvar }})
-#rnorm(5)
-#print(sym(strvar))
-#?sym
 
 expand_comparisons_base_short = function(genelist, clusters) {
   
@@ -112,46 +55,6 @@ comparisons_from_genelist = function(genelist) {
   by(genelist, genelist$modal_compar_clustid, function(gg)new_comparison(gg$feature, gg$id.1[1], gg$id.2[1], modality=gg$modality[1], cluster=gg$cluster[1]))
 }
 
-named_vector = function(keys, values) {
-  names(values) = keys
-  values
-}
-
-convert_name = function(name, convert) {
-  convert[[name]]
-}
-
-fill_pvalues_from_wuv = function(scaledExp, wuv_compres, modality, goi=NULL) {
-  wuv_compres = cbind(wuv_compres_rna, do.call(rbind, strsplit(gsub("[_]vs[_]", "-",wuv_compres_rna$matchup), "-")))
-  features = rownames(scaledExp)
-  print(features)
-  pltcomps = matrix(nrow = length(features), ncol = 3)
-  print(pltcomps)
-  rownames(pltcomps) = features
-  colnames(pltcomps) = c("ND-AAb+", "ND-T1D", "AAb+-T1D")
-  for(comp in strsplit(colnames(pltcomps), '-')) {
-    rele_res = wuv_compres[which(wuv_compres$matchup == sprintf("%s_vs_%s", comp[1], comp[2])),]
-    rownames(rele_res) = rele_res$gene
-    if (length(seq_along(rele_res[,1])) == 0) {
-      print(sprintf("No rele_res for comparison betwixt: %s - %s", comp[1], comp[2]))
-      next
-    }
-    if (!is.null(goi) && modality == "adt") {
-      rownames(rele_res) = sapply(rownames(rele_res), convert_name, named_vector(goi$adt_number, goi$gene))
-    }
-    rows = which(rownames(pltcomps) %in% rownames(rele_res))
-    print(rele_res)
-    print(rownames(pltcomps)[rows])
-    pvalues = rele_res[rownames(pltcomps)[rows],]
-    print(pvalues)
-    if (length(seq_along(rele_res[,1])) > 0) {
-      pltcomps[,sprintf("%s-%s", comp[1], comp[2])] = pvalues[rownames(pltcomps),]$p_val_adj_all
-    }
-    #pltcomps[is.na(pltcomps)] = 1
-  }
-  pltcomps
-}
-
 fill_pvalues = function(scaledExp, modality, goi=NULL) {
   features = rownames(scaledExp)
   pltcomps = matrix(nrow = length(features), ncol = 3)
@@ -177,7 +80,6 @@ fill_pvalues = function(scaledExp, modality, goi=NULL) {
     if (length(seq_along(rele_res[,1])) > 0) {
       pltcomps[,sprintf("%s-%s", comp[1], comp[2])] = pvalues[rownames(pltcomps),]$p_val
     }
-    #pltcomps[is.na(pltcomps)] = 1
   }
   pltcomps
 }
@@ -191,64 +93,10 @@ get_genes = function(compres, so, modality, target_clusters) {
 }
 
 pval2pch = function(pvalues) {
-  pchd = ifelse(is.na(pvalues), "", "*")
+  pchd = ifelse(is.na(pvalues), "", "")
+  pchd = ifelse(pvalues>=1.30103,"*",pchd)
   pchd = ifelse(pvalues>=10, "**", pchd)
   pchd = ifelse(pvalues>=50, "***", pchd)
   pchd
 }
 
-make_hm = function(scaled_data,
-                   pvalues,
-                   colmin, colmax,
-                   rect_label,
-                   colscale,
-                   annotVar,
-                   pctexp = NULL,
-                   rannot_labels = TRUE,
-                   showlegends=FALSE) {
-  column_order = unname(sapply(colnames(scaled_data), function(cn) which(grepl(strsplit(cn, " ")[[1]][1], c("ND", "AAb+", "T1D")))))
-  if (!is.null(pctexp)) {
-    ct =gsub("[(][^)]+[)][ ]", "", colnames(scaled_data))
-    bars = pctexp[pctexp[annotVar] == ct[1],]
-    bars_mat = as.matrix(bars[,-c(1,2)])
-    hma_colscale = list("percent_expressing" = circlize::colorRamp2(breaks=c(0,1), rev(hcl.colors(n=24, palette = "Purples"))[c(1,24)]),
-                        "pvalues" = circlize::colorRamp2(breaks=c(0,10,50,100,323), hcl.colors(n=24, palette = "Earth")[c(6,12,16,20,24)]))
-    print(colscale)
-#rannot = ComplexHeatmap::HeatmapAnnotation(which="row", bar = ComplexHeatmap::anno_barplot(bars_mat, beside = TRUE))
-    rannot = ComplexHeatmap::rowAnnotation(percent_expressing = ComplexHeatmap::anno_simple(as.matrix(bars_mat),
-                                                                                 col=hma_colscale[["percent_expressing"]], 
-                                                                                 na_col="white",
-                                                                                 simple_anno_size=unit(0.2, "in"), 
-                                                                                 gp=gpar(col="white")),
-                                           pvalues = ComplexHeatmap::anno_simple(as.matrix(pvalues),
-                                                                                 col=hma_colscale[["pvalues"]], 
-                                                                                 na_col="white",
-                                                                                 pch=pval2pch(pvalues),
-                                                                                 pt_size=unit(0.4, "in"),
-                                                                                 simple_anno_size=unit(0.4, "in"), 
-                                                                                 gp=gpar(col="white")),
-                                           col=hma_colscale,
-                                           show_annotation_name = rannot_labels, 
-                                           simple_anno_size= unit(0.2, "in"), 
-                                           gp=gpar(col="white"),
-                                           annotation_name_side=c("bottom","bottom"))
-  } else {
-    rannot = NULL
-  }
-  hm = ComplexHeatmap::Heatmap(
-                          scaled_data,
-                          na_col = "grey90", 
-                          cluster_rows=T, 
-                          cluster_columns=F, 
-                          rect_gp = gpar(col = "white", lwd = 2), 
-                          col = colscale,
-                          row_title = rect_label, 
-                          row_title_gp = gpar(fill = "black", col = "white", border = "black"),
-                          show_heatmap_legend = showlegends,
-                          heatmap_legend_param = list(title="Norm Expr"),
-                          border = FALSE,
-                          column_order = column_order,
-                          right_annotation=rannot
-  )
-  hm
-}
