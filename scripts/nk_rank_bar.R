@@ -2,26 +2,6 @@ library(ggplot2)
 source("figures/genericFigureSettings.R")
 source("scripts/parse_comparisons.R")
 
-pValSymnum <- function(x, showNs = TRUE) {
-  tmp <- sapply(x, function(y) {
-                  if (is.na(y)) {
-                    return(NA)
-                  }
-
-                  if (y < 0.001) {
-                    return("***")
-                  } else if (y >= 0.001 & y < 0.01) {
-                    return("**")
-                  } else if (y >= 0.01 & y < 0.05) {
-                    return("*")
-                  } else {
-                    return(ifelse(showNs, "ns", ""))
-                  }
-})
-
-  return(tmp)
-}
-
 so_pln_only = readRDS("rds/so_pln_only.rds")
 
 clusters = unique(so_pln_only[["manualAnnot"]])
