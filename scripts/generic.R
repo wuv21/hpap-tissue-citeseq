@@ -56,6 +56,15 @@ savePlot <- function(
   }
 }
 
+named_vector = function(keys, values) {
+  names(values) = keys
+  values
+}
+
+convert_name = function(name, convert) {
+  convert[[name]]
+}
+
 ### GENERIC THEMES
 
 textSizeOnlyTheme <- theme(

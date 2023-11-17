@@ -75,3 +75,20 @@ fillPvalsFromFindFeaturesCombinatorial = function(scaledExp, wuv_compres, modali
   }
   pltcomps
 }
+
+pvalues2pubr = function(pvalues, gene, xlvl, bracketx) {
+  offset = 0
+  out = list()
+  for (x in xlvl) {
+    recast = as_tibble(do.call(rbind, lapply(names(pvalues[[x]][g,]), function(n) c(strsplit(n, "[-]")[[1]], pvalues[[x]][g,n]))))
+    colnames(recast) = c("group1", "group2", "p.signif")
+    recast$group1x = sapply(recast$group1, function(x) bracketx(offset, x))
+    recast$group2x = sapply(recast$group2, function(x) bracketx(offset, x))
+    recast$p.signif = as.numeric(recast$p.signif)
+    recast$p.sym = pValSymnum(recast$p.signif)
+    recast$p.sym = ifelse(is.na(recast$p.sym), "ns", recast$p.sym)
+    offset=offset+1
+    out[[offset]] = recast
+  }
+  return(do.call(rbind, out))
+}
