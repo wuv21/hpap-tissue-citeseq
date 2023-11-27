@@ -12,22 +12,27 @@ tsa_catalog = readRDS("rds/tsa_catalog.rds")
 
 so = readRDS("../seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
 
-clusters = unique(so[["manualAnnot"]])
+so_pln_only = readRDS("rds/so_pln_only.rds")
+clusters = unique(so_pln_only[["manualAnnot"]])
 bcell_clusters = clusters[which(startsWith(clusters[,1], "B")),1]
 nk_clusters = c("NK", "NK/ILC")
 
-# Make another column in so metadata for combined cluster groups
-so[["groupedAnnot"]] = ifelse(so[["manualAnnot"]][,1] %in% bcell_clusters, "All B Cells combined", NA)
-so[["groupedAnnot"]] = ifelse(so[["manualAnnot"]][,1] %in% nk_clusters, "All NK Cells combined", so[["groupedAnnot"]][,1])
-unique(so[["groupedAnnot"]])
+convert = c(rep("All B cells combined", length(bcell_clusters)), rep("All NK Cells combined", length(nk_clusters)))
+names(convert)=c(bcell_clusters, nk_clusters)
 
-so_pln_only = readRDS("rds/so_pln_only.rds")
+# Make another column in so metadata for combined cluster groups
+# so_pln_only[["groupedAnnot"]] = ifelse(so_pln_only[["manualAnnot"]][,1] %in% bcell_clusters, "All B Cells combined", NA)
+#so_pln_only[["groupedAnnot"]] = ifelse(so_pln_only[["manualAnnot"]][,1] %in% nk_clusters, "All NK Cells combined", so_pln_only[["groupedAnnot"]][,1])
+#unique(so_pln_only[["groupedAnnot"]])
+
 so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
+unique(so_pln_only[["groupedAnnot"]])
 
 goi = tibble::as_tibble(read.table("HPAP_CITEseq_gene_list_V3.csv", sep = ',', header=TRUE, row.names=NULL, fill=NA))
 goi$comparison = gsub("AAb", "AAb+", goi$comparison)
 goi$modality
 unique(goi[goi$modality == "RNA",]$Heatmap)
+goi
 
 annotVar = "manualAnnot"
 
@@ -41,9 +46,14 @@ compsout_rna = compsout_rna[compsout_rna$gene %in% goi[goi$Heatmap == 2,]$gene,]
 saveRDS(compsout_rna, "rds/wuv_compres_rna_genelist_V3.rds")
 
 #Bcells v3 separate clusters
-compsout_rna = lapply(unique(bcell_clusters), function(xx) findMarkersCombinatorial(subset(so_pln_only, !!sym(annotVar) == xx), combVar = "Disease_Status", assay = "RNA"))
+compsout_rna = lapply(unique(bcell_clusters), function(xx) {
+                        df = findMarkersCombinatorial(subset(so_pln_only, !!sym(annotVar) == xx), combVar = "Disease_Status", assay = "RNA")
+                        df["cluster"] = xx
+})
+compsout_rna
 compsout_rna = lapply(compsout_rna, function(compsout_rna) compsout_rna[compsout_rna$gene %in% goi[goi$modality == "RNA",]$gene,])
 saveRDS(compsout_rna, "rds/wuv_compres_rna_bcellsep_genelist_V3.rds")
+readRDS( "rds/wuv_compres_rna_bcellsep_genelist_V3.rds")
 
 #NK cells v1, for ranked plots
 so_pln_only = readRDS("rds/so_pln_only.rds")
@@ -55,8 +65,7 @@ goiv1
 
 compsout_nk_rna = findMarkersCombinatorial(subset(so_pln_only, groupedAnnot == "All NK Cells combined"), combVar = "Disease_Status", assay = "RNA")
 compsout_nk_rna
-compsout_nk_rna = compsout_nk_rna[compsout_nk_rna$gene %in% goiv1[goiv1$modality == "RNA",]$gene,]
-saveRDS(compsout_nk_rna, "rds/wuv_compres_rna_genelist_V1.rds")
+saveRDS(compsout_nk_rna, "rds/wuv_compres_rna_nkcells.rds")
 
 
 #################### other abstractions
@@ -158,7 +167,6 @@ FindMarkers(meh, ident.1 = "T1D", ident.2 = "ND", features = as.character(compar
 which(!comparisons[["RNA__ND_T1D__13"]] %in% rownames(meh)) 
 unique(Idents(meh))
 
-       clusters 
 allres = tibble()
 for (comp in unique(goi$comparison)) {
   sub = goi %>% filter(comparison == comp)
@@ -196,29 +204,5 @@ for (comp in unique(goi$comparison)) {
   }
 }
 write.table(allres, file = "B_NK_CITEseq_gene_list_DEG.tsv", quote=FALSE, row.names=FALSE, sep='\t')
-
-res = FindMarkers(so, ident.1 = combinations[1,i], ident.2 = combinations[2,i], features = features, logfc.threshold=0.05)
-allres
-    
-Idents(so_sub)
-features
-  print(features %>% filter(modality == m))
-}
-  print(i)
-  res = FindMarkers(so, ident.1 = combinations[1,i], ident.2 = combinations[2,i], features =goi %>% filter(modality == "ADT") %>% filter(comparison == "ND_AAb_T1D" ) %>% pull(adt_number), logfc.threshold=0.05)
-  res = as_tibble(res, rownames="feature")
-  res["comparison"] = sprintf("%s_%s", combinations[1,i], combinations[2,i])
-  allres=bind_rows(allres, res)
-}
-allres
-res = FindMarkers(so, ident.1 = "ND", ident.2 = "T1D", features =goi %>% filter(modality == "ADT") %>% filter(comparison == "ND_T1D" ) %>% pull(adt_number), logfc.threshold=0.05)
-res = as_tibble(res, rownames="feature")
-res["comparison"] = sprintf("%s_%s", "ND", "T1D")
-allres=bind_rows(allres, res)
-allres
-
-pdf("figures/test.pdf", width=11, height=11)
-FeaturePlotCustom(so, markers = goi$adt_number, modality = "adt", tsa_catalog=tsa_catalog)
-dev.off()
 
 
