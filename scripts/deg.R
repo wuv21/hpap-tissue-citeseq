@@ -23,6 +23,7 @@ findMarkersCombinatorial <- function(
     
     comp <- paste0(group1, "_vs_", group2)
     message(paste0("testing ", comp))
+    
     deg <- FindMarkers(seuratObj,
       ident.1 = group1,
       ident.2 = group2,
@@ -222,7 +223,7 @@ plotCombinatorialDEGLollipop <- function(combMarkersRes, title) {
   p <- df %>%
     {
       ggplot(., aes(y = facet_gene_number, x = avg_log2FC, color = upregulated)) +
-        geom_point() +
+        geom_point(size = 1) +
         geom_vline(xintercept = 0) +
         scale_color_manual(values = COLORS[["disease"]]) +
         scale_y_discrete(labels = function(x) gsub("\\d+_", "", x)) +
