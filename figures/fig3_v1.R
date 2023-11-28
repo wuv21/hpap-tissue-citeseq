@@ -2,10 +2,109 @@
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
+source("scripts/deg.R")
 library(Seurat)
 library(cowplot)
+library(WGCNA)
+library(hdWGCNA)
+library(presto)
+library(msigdbr)
+library(fgsea)
+library(ggtext)
 
 set.seed(42)
+
+parentDir <- "figures/greg_flow_data"
+
+################################################################################
+# A - cd4 differences in cd25 expression in pLN
+################################################################################
+dfLineageFilter <- readRDS(paste0(parentDir, "/rds/dfLineageFilter.rds"))
+
+dfDiseaseScales <- dfLineageFilter %>%
+  filter(!grepl("^CD. Mem CD.*$", metric)) %>%
+  filter(!grepl("^CD. Mem .*\\+$", metric)) %>%
+  filter(grepl("CD. ", metric)) %>%
+  mutate(`Disease Status` = factor(`Disease Status`, levels = c("ND", "AAb+", "T1D"))) %>%
+  mutate(LN_type = factor(LN_type, levels = c("pLN", "mLN", "Spleen"))) %>%
+  mutate(cd = case_when(
+    str_detect(metric, "CD4") ~ "CD4",
+    str_detect(metric, "CD8") ~ "CD8")) %>%
+  mutate(tpop = case_when(
+    str_detect(metric, "Tn ") ~ "Tn",
+    str_detect(metric, "Tnl") ~ "Tnl",
+    str_detect(metric, "Tcm") ~ "Tcm",
+    str_detect(metric, "Tem ") ~ "Tem",
+    str_detect(metric, "Temra") ~ "Temra",
+    str_detect(metric, "Tn$") ~ "Tn",
+    str_detect(metric, "Tem$") ~ "Tem",
+    str_detect(metric, "CD4 Mem") ~ "Mem")) %>%
+  mutate(tpop = factor(tpop, levels = c("Tn", "Tnl", "Tcm", "Tem", "Temra", "Mem")))
+
+figA <- dfDiseaseScales %>%
+  filter(LN_type == "pLN" & cd == "CD4") %>%
+  filter(grepl("CD25+", metric) & !grepl("HLA-DR+", metric)) %>%
+  ggplot(aes(`Disease Status`, value, color = `Disease Status`)) +
+  labs(y = "% of CD4+ T cells") +
+  geom_boxplot(
+    width = 0.8,
+    outlier.shape = NA,
+    show.legend = FALSE) +
+  geom_point(
+    size = 1,
+    stroke = 0.2,
+    alpha = 0.4,
+    show.legend = FALSE,
+    position = position_jitterdodge(jitter.width = 1, dodge.width = 0.8)) +
+  scale_color_manual(values = COLORS$disease) +
+  theme_classic() +
+  subplotTheme +
+  theme(
+    axis.title.x = element_blank(),
+    strip.background = element_rect(fill = "#00000000", color = "#00000000"),
+    strip.text = element_text(size = 8),
+    axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000"),
+    axis.text.y = element_text(size = 6, color = "#000000"),
+    axis.title.y = element_text(size = 6)) +
+  facet_grid(cols = vars(tpop), switch = "y")
+
+
+################################################################################
+# B - cd4 differences in Treg-like
+################################################################################
+figB <- dfDiseaseScales %>%
+  filter(LN_type == "pLN" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
+  ggplot(aes(`Disease Status`, value, color = `Disease Status`)) +
+  labs(
+    y = "% of Mem CD4+ T cells",
+    title = "Treg-like") +
+  geom_boxplot(
+    width = 0.8,
+    outlier.shape = NA,
+    show.legend = FALSE) +
+  geom_point(
+    size = 1,
+    stroke = 0.2,
+    alpha = 0.4,
+    show.legend = FALSE,
+    position = position_jitterdodge(jitter.width = 1, dodge.width = 0.8)) +
+  scale_color_manual(values = COLORS$disease) +
+  theme_classic() +
+  subplotTheme +
+  theme(
+    axis.title.x = element_blank(),
+    strip.background = element_rect(fill = "#00000000", color = "#00000000"),
+    plot.title = element_text(size = 8, hjust = 0.5),
+    plot.title.position = "panel",
+    axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000"),
+    axis.text.y = element_text(size = 6, color = "#000000"),
+    axis.title.y = element_text(size = 6))
+
+
+################################################################################
+# D - heatmap for treg cluster
+################################################################################
+tsaCatalog <- readRDS("rds/tsa_catalog.rds")
 
 seu <- tryCatch(
   {
@@ -15,285 +114,307 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-12_16-27-41.rds")
-    
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+
     return(tmp)
 })
-
 
 manualClusterOrder <- unique(seu$manualAnnot)
 manualClusterOrder <- factor(manualClusterOrder,
   levels = customSortAnnotation(manualClusterOrder),
   labels = stringr::str_trim(customSortAnnotation(manualClusterOrder)))
 
-################################################################################
-# Figures A-C
-################################################################################
-figA <- DimPlot(seu, reduction = "rna.umap", group.by = "TissueCondensed") +
-  scale_color_manual(values = COLORS[["tissue"]]) +
-  labs(title = "Tissue")
-figB <- DimPlot(seu, reduction = "rna.umap", group.by = "Disease_Status", shuffle = TRUE) +
-  scale_color_manual(values = COLORS[["disease"]], limits = c("ND", "AAb+", "T1D")) +
-  labs(title = "Disease Status")
-figC <- DimPlot(seu, reduction = "rna.umap", group.by = "manualAnnot") +
-  scale_color_discrete(limits = levels(manualClusterOrder)) +
-  labs(title = "Cell Type")
-
-legendTheme <- theme(
-  legend.margin = margin(0,0,0,0),
-  legend.box.margin = margin(-10,-10,-10,-10),
-  legend.justification = "left",
-  legend.key.size = unit(0.2, 'lines'),
-  legend.spacing.x = unit(2, "points"),
-  legend.text = element_text(margin = margin(r = 20, unit = "pt"), size = 5),
-  legend.title = element_text(size = 7, color = "#000000", hjust = 0))
-
-a_legend <- ggpubr::as_ggplot(get_legend(figA + 
-    guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Legend for (A)",
-      title.position = "top",
-      title.hjust = 0)) +
-    legendTheme +
-    theme(legend.box.margin = margin(-10,0,-10,-10))))
-
-b_legend <- ggpubr::as_ggplot(get_legend(figB + 
-    guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Legend for (B)",
-      title.position = "top",
-      title.hjust = 0)) +
-    legendTheme +
-    theme(legend.box.margin = margin(-10,-10,-10,0))))
-
-c_legend <- ggpubr::as_ggplot(get_legend(figC + 
-    guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 15,
-      title = "Legend for (C)",
-      title.position = "top",
-      title.hjust = 0))  +
-    legendTheme))
-
-figA <- figA +
-  subplotTheme +
-  umapPlotThemeNoLeg 
-
-figB <- figB + 
-  subplotTheme +
-  umapPlotThemeNoLeg + 
-  theme(axis.title.y = element_text(color = "#FFFFFF00"),
-    plot.margin = unit(c(0, 0, 0, 0), "pt"))
-
-figC <- figC + 
-  subplotTheme +
-  umapPlotThemeNoLeg +
-  theme(axis.title.y = element_text(color = "#FFFFFF00"),
-    plot.margin = unit(c(0, 0, 0, 0), "pt"))
-
-figABC <- (figA + figB + figC & labs(x = "UMAP 1", y = "UMAP 2"))
-
-figABCLegend <- (a_legend + b_legend + plot_layout(widths = c(1, 1))) / c_legend + plot_layout(heights = c(1, 15))
-
-figABCLegend[[1]] <- figABCLegend[[1]] +
-  theme(plot.margin = margin(t = 0, b = 0, l = 10))
-
-figABCLegend[[2]] <- figABCLegend[[2]] +
-  theme(plot.margin = margin(t = 40, b = 30, l = 10))
+seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D"))
 
 
 ################################################################################
-# Figure D
+# generate results for each cluster between nd vs t1d
 ################################################################################
-frequencyDf <- data.frame(
-  cluster = seu$manualAnnot,
-  tissue = seu$TissueCondensed,
-  donor = seu$DonorID,
-  diseaseStatus = seu$Disease_Status) %>%
-  mutate(diseaseStatus = factor(diseaseStatus, levels = c("ND", "AAb+", "T1D"))) %>%
-  mutate(cluster = factor(stringr::str_trim(cluster), levels = levels(manualClusterOrder)))
+commonGenesFn <- "outs/csv/pLN_findAllMarkers_byManualAnnot_inMoreThan12Clusters.csv"
+if (!file.exists(commonGenesFn)) {
+  allMarkers <- lapply(levels(manualClusterOrder), function(x) {
+    result <- tryCatch(
+      {
+        message(paste0("working on: "), x)
+        result <- subset(seu, subset = TissueCondensed == "pLN" & manualAnnot == x)
+        
+      }, error = function(e) {
+        result <- NULL
+      })
+    
+    message("doing DE testing now")
+    if (!is.null(result) && ncol(result) > 0) {
+      Idents(result) <- "Disease_Status"
+      df <- FindAllMarkers(
+        result,
+        assay = "RNA",
+        logfc.threshold = 0.1,
+        only.pos = TRUE
+      )
+      
+      rownames(df) <- NULL
+      
+      return(df)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  names(allMarkers) <- levels(manualClusterOrder)
+  
+  allMarkersDf <- bind_rows(allMarkers, .id = "manualAnnot") %>%
+    group_by(manualAnnot, cluster) %>%
+    slice_min(p_val_adj, n = 250)
+  
+  # common genes that are expressed in all clusters for a particular disease state
+  commonGenes <- allMarkersDf %>%
+    group_by(cluster, gene) %>%
+    dplyr::summarize(number = n()) %>%
+    arrange(desc(number)) %>%
+    group_by(cluster) %>%
+    filter(number > 12)
+  
+  write.csv(commonGenes, file = commonGenesFn,
+    row.names = FALSE,
+    quote = FALSE)
+  
+} else {
+  commonGenes <- read.csv(commonGenesFn)
+}
 
-frequencyPlotTheme <- list(
-  theme_bw(),
-  coord_cartesian(clip = "off"),
-  theme(
-    axis.text.x = element_text(color = "#000000", angle = 45, hjust = 1, vjust = 1, size = 4, margin = margin(b = -5, unit = "lines")),
-    axis.title.y = element_text(color = "#000000", size = 6),
-    axis.text.y = element_text(color = "#000000", size = 4),
-    axis.title.x = element_blank(),
-    legend.position = "bottom",
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor.x = element_blank(),
-    panel.border = element_rect(fill = NULL, colour = "#000000", size = 0.25)
-    ),
-  guides(fill = "none",
-    shape = guide_legend(
-      override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Tissue",
-      title.position = "top",
-      title.hjust = 0.5))
-)
-
-# number of cells in each cluster
-figD <- frequencyDf %>%
-  group_by(cluster, tissue, diseaseStatus) %>%
-  summarize(nCells = n()) %>%
-  ggplot(aes(x = cluster, y = nCells, shape = tissue, fill = diseaseStatus, group = tissue)) +
-  geom_point(color = "#000000", alpha = 0.8, size = 0.75, position = position_dodge(width = 0.75)) +
-  # facet_wrap(~ tissue, ncol = 1, strip.position = "right") +
-  theme(legend.position = "bottom") +
-  scale_fill_manual(values = COLORS[["disease"]]) +
-  scale_shape_manual(values = c(21:23)) +
-  labs(x = "Total number of cells", y = "Cluster") +
-  subplotTheme +
-  frequencyPlotTheme +
-  legendTheme +
-  theme(
-    legend.justification = "center", 
-    legend.box.margin = margin(-20,0,-20,0),
-    legend.title = element_blank())
-    # legend.title = element_text(size = 6))
-  # coord_flip()
+commonGenesByDisease <- split(commonGenes, commonGenes$cluster)
 
 ################################################################################
-# Fig E heatmap
+# actual figure d
 ################################################################################
-clusterDEG <- read.csv("outs/tsv/DE_RNA_cluster.tsv", sep = "\t")
-top10DegByCluster <- clusterDEG %>%
-  group_by(cluster) %>%
-  filter(p_val_adj < 0.05) %>%
-  slice_max(avg_log2FC, n = 10)
+seu_pln_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "pLN")
+treg_gene_list <- read.csv("figures/fig3_gene_lists/fig3_treg_genelist.csv", header = TRUE, sep = ",")$gene
 
-top10DegAvgExpression <- AverageExpression(
-  object = seu,
+treg_avg_exp <- AverageExpression(
+  object = seu_pln_treg,
   assays = "RNA",
   return.seurat = FALSE,
-  features = top10DegByCluster$gene,
-  group.by = "manualAnnot",
+  features = treg_gene_list,
+  group.by = "Disease_Status",
   slot = "data")
 
-top10DegAvgExpression <- top10DegAvgExpression$RNA
-figE <- Heatmap(
-  matrix = t(scale(t(top10DegAvgExpression))),
+treg_avg_exp_rna <- treg_avg_exp$RNA
+
+Idents(seu_pln_treg) <- "Disease_Status"
+
+# From FindMarkers doc: positive values indicate that the gene is more highly
+# expressed in the first group
+FindMarkers(
+  object = seu_pln_treg,
+  features = treg_gene_list,
+  ident.1 = "ND",
+  ident.2 = "AAb+",
+  logfc.threshold	= 0
+)
+
+fig_treg <- Heatmap(
+  matrix = t(scale(t(treg_avg_exp_rna))),
   cluster_columns = FALSE,
   cluster_rows = TRUE,
-  show_row_names = FALSE,
-  row_names_gp = gpar(fontsize = 5),
-  column_names_gp = gpar(fontsize = 5),
-  column_names_rot = 45,
-  row_km = length(colnames(top10DegAvgExpression)),
-  right_annotation = rowAnnotation(
-    foo = anno_block(gp = gpar(fill = "#000000"), width = unit(0.7, "mm")),
-    bar = anno_block(
-      graphics = function(index, levels) {
-        lbls <- rownames(top10DegAvgExpression)[index]
-        lbls <- str_wrap(paste(lbls, collapse = " "), width = 30)
-        
-        grid.rect(gp = gpar(fill = NA, col = NA))
-        txt = paste(lbls, collapse = ",")
-        grid.text(txt, 0.01, 0.5, rot = 0, hjust = 0, gp = gpar(fontsize = 4))
-      },
-      width = unit(3, "cm"))
-  ),
+  show_row_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_centered = TRUE,
+  column_names_gp = gpar(fontsize = 6),
+  row_dend_width = unit(3, "points"),
+  column_names_rot = 0,
   name = "Scaled Average Expression",
   heatmap_legend_param = list(
     direction = "horizontal",
     title_position = "topcenter",
     title_gp = gpar(fontsize = 6, fontface = "plain"),
     labels_gp = gpar(fontsize = 6),
-    legend_height = unit(0.08, "cm"),
-    legend_width = unit(2, "cm")),
-  row_title_gp = gpar(fontsize = 5)
+    grid_height = unit(1.25, "mm"),
+    legend_height = unit(2, "mm"),
+    legend_width = unit(10, "mm")),
+  row_title_gp = gpar(fontsize = 6)
 )
 
-################################################################################
-# Fig F heatmap
-################################################################################
-clusterDEA <- read.csv("outs/tsv/DE_ADT_cluster.tsv", sep = "\t")
-top10DeaByCluster <- clusterDEA %>%
-  group_by(cluster) %>%
-  filter(p_val_adj < 0.05) %>%
-  slice_max(avg_log2FC, n = 10)
 
-top10DeaAvgExpression <- AverageExpression(
-  object = seu,
-  assays = "adt",
-  features = top10DeaByCluster$gene,
-  group.by = "manualAnnot",
+
+################################################################################
+# in CD4 Tcm/treg subset, what are differential markers that are expressed?
+################################################################################
+seu_pln_treg_foxp3 <- subset(seu_pln_treg, subset = FOXP3 > 0.5)
+foxp3_diseaseStatus_deg <- findMarkersCombinatorial(seu_pln_treg_foxp3, "Disease_Status")
+
+figE <- plotCombinatorialDEGLollipop(
+  foxp3_diseaseStatus_deg %>% filter(!(gene %in% commonGenesByDisease$`ND`$gene) &
+      !(gene %in% commonGenesByDisease$`AAb+`$gene) &
+      !(gene %in% commonGenesByDisease$`T1D`$gene)), title = "test") +
+  coord_cartesian(clip = "off") +
+  subplotTheme +
+  theme(
+    legend.position = "bottom",
+    legend.box.margin = margin(t = -10, b = 0),
+    axis.text.y = element_text(size = 5, color = "#000000"),
+    axis.text.x = element_text(size = 6, color = "#000000"),
+    axis.title = element_text(size = 6),
+    legend.title = element_text(size = 6),
+    legend.text = element_text(size = 6),
+    plot.title = element_blank(),
+    strip.text = element_markdown(hjust = 0.5, size = 6)) +
+  facet_wrap(~ matchup,
+    scales = "free",
+    labeller = as_labeller(c(
+    "ND_vs_AAb+" = glue("<span style='color: {COLORS$disease['AAb+']};'>up in AAb+</span> | <span style='color: {COLORS$disease['ND']};'>up in ND</span>"),
+    "ND_vs_T1D" = glue("<span style='color: {COLORS$disease['T1D']};'>up in T1D</span> | <span style='color: {COLORS$disease['ND']};'>up in ND</span>"),
+    "T1D_vs_AAb+" = glue("<span style='color: {COLORS$disease['AAb+']};'>up in AAb+</span> | <span style='color: {COLORS$disease['T1D']};'>up in T1D</span>"))))
+  
+
+
+################################################################################
+# potential figure - harmonizome
+harmonizome_gene_list <- read.csv("figures/fig3_gene_lists/harmonizome_foxp3_targets.txt", header = FALSE, sep = ",")$V1
+harmonizome_gene_list <- intersect(rownames(seu_pln_treg), harmonizome_gene_list)
+
+harmonizome_avg_exp <- AverageExpression(
+  object = seu_pln_treg,
+  assays = "RNA",
+  return.seurat = FALSE,
+  features = harmonizome_gene_list,
+  group.by = "Disease_Status",
   slot = "data")
 
-tsaCatalog <- readRDS("rds/tsa_catalog.rds")
-labellerAdt <- tsaCatalog$cleanName
-names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
+harmonizome_avg_exp <- harmonizome_avg_exp$RNA
 
-top10DeaAvgExpression <- top10DeaAvgExpression$adt
-rownames(top10DeaAvgExpression) <- labellerAdt[paste0("adt_", rownames(top10DeaAvgExpression))]
+Idents(seu_pln_treg) <- "Disease_Status"
 
-figF <- Heatmap(
-  matrix = t(scale(t(top10DeaAvgExpression))),
+fig_harmonizome <- Heatmap(
+  matrix = t(scale(t(harmonizome_avg_exp))),
   cluster_columns = FALSE,
   cluster_rows = TRUE,
   show_row_names = FALSE,
-  row_names_gp = gpar(fontsize = 5),
-  column_names_gp = gpar(fontsize = 5),
-  column_names_rot = 45,
-  row_km = length(colnames(top10DeaAvgExpression)),
-  right_annotation = rowAnnotation(
-    foo = anno_block(gp = gpar(fill = "#000000"), width = unit(0.7, "mm")),
-    bar = anno_block(
-      graphics = function(index, levels) {
-        lbls <- rownames(top10DeaAvgExpression)[index]
-        lbls <- str_wrap(paste(lbls, collapse = " | "), width = 30)
-        
-        grid.rect(gp = gpar(fill = NA, col = NA))
-        txt = paste(lbls, collapse = ",")
-        grid.text(txt, 0.01, 0.5, rot = 0, hjust = 0, gp = gpar(fontsize = 4))
-      },
-      width = unit(3, "cm"))
-  ),
+  row_names_gp = gpar(fontsize = 6),
+  column_names_centered = TRUE,
+  column_names_gp = gpar(fontsize = 6),
+  row_dend_width = unit(3, "points"),
+  column_names_rot = 0,
   name = "Scaled Average Expression",
   heatmap_legend_param = list(
-    direction = "horizontal",
+    direction = "vertical",
     title_position = "topcenter",
     title_gp = gpar(fontsize = 6, fontface = "plain"),
     labels_gp = gpar(fontsize = 6),
-    legend_height = unit(0.08, "cm"),
-    legend_width = unit(2, "cm")),
-  row_title_gp = gpar(fontsize = 5)
+    grid_height = unit(1.25, "mm"),
+    legend_width = unit(10, "mm")),
+  row_title_gp = gpar(fontsize = 6)
 )
+
+# From FindMarkers doc: positive values indicate that the gene is more highly
+# expressed in the first group
+harmonizomeDeg <- findMarkersCombinatorial(
+  seuratObj = seu_pln_treg,
+  combVar = "Disease_Status",
+  assay = "RNA",
+  features = harmonizome_gene_list
+)
+
+harmonizomeDegNoCommon <- harmonizomeDeg %>%
+  filter(!gene %in% commonGenes$gene)
+
+tmp <- harmonizomeDegNoCommon %>%
+  group_by(matchup, upregulated) %>%
+  filter(p_val_adj_all < 0.05) %>%
+  filter(matchup == "ND_vs_AAb+" & upregulated == "ND") %>%
+  arrange(desc(avg_log2FC)) %>%
+  # slice_max(abs(avg_log2FC), n = 10) %>%
+  select(-p_val, -p_val_adj)
+
+
+################################################################################
+# mln (potential figure f)
+################################################################################
+seu_mln_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "mesLN")
+
+treg_mln_avg_exp <- AverageExpression(
+  object = seu_mln_treg,
+  assays = "RNA",
+  return.seurat = FALSE,
+  features = treg_gene_list,
+  group.by = "Disease_Status",
+  slot = "data")
+
+treg_mln_avg_exp_rna <- treg_mln_avg_exp$RNA
+
+Idents(seu_mln_treg) <- "Disease_Status"
+
+
+treg_mln_deg <- findMarkersCombinatorial(
+  seuratObj = seu_mln_treg,
+  combVar = "Disease_Status",
+  assay = "RNA",
+  features = treg_gene_list
+)
+
+treg_mln_deg %>%
+  filter(p_val_adj_all < 0.05) %>%
+  arrange(desc(avg_log2FC)) %>%
+  select(-p_val, -p_val_adj)
+
+
+
+fig_treg_mln <- Heatmap(
+  matrix = t(scale(t(treg_mln_avg_exp_rna))),
+  cluster_columns = FALSE,
+  cluster_rows = TRUE,
+  show_row_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_centered = TRUE,
+  column_names_gp = gpar(fontsize = 6),
+  row_dend_width = unit(3, "points"),
+  column_names_rot = 0,
+  name = "Scaled Average Expression",
+  heatmap_legend_param = list(
+    direction = "vertical",
+    title_position = "topcenter",
+    title_gp = gpar(fontsize = 6, fontface = "plain"),
+    labels_gp = gpar(fontsize = 6),
+    grid_height = unit(1.25, "mm"),
+    legend_width = unit(15, "mm")),
+  row_title_gp = gpar(fontsize = 6)
+)
+
+
+
+
 
 ################################################################################
 # Final layout and plot all
 ################################################################################
 layout <- c(
-  area(1, 1, 2, 7), #abc
-  area(1, 8, 2, 12), #legend
-  area(3, 1, 4, 12), #d
-  area(5, 1, 11, 6), #e
-  area(5, 7, 11, 12) #f
+  patchwork::area(1, 1, 2, 6), # a
+  patchwork::area(3, 1, 4, 2), # b
+  patchwork::area(3, 3, 4, 6), # c representative flow plots
+  patchwork::area(1, 7, 4, 9), # d heatmap
+  patchwork::area(5, 1, 9, 9) # e 
 )
 
-figABC_final <- figABC +
-  plot_annotation(tag_levels = list(LETTERS[1:3])) &
-  plotTagTheme
-
-p <- wrap_elements(full = figABC_final, ignore_tag = TRUE) +
-  wrap_elements(full = figABCLegend, ignore_tag = TRUE, clip = FALSE) +
-  wrap_elements(full = figD + theme(plot.margin = margin(l = 10, t = 10, b = 30)), clip = FALSE) +
-  wrap_elements(full = 
-    grid.grabExpr(
-      draw(figE,
-        heatmap_legend_side = "bottom",
-        annotation_legend_side = "bottom",
-        background = "transparent",
-        padding = unit(c(0, 1.5, 0.5, -1), "lines"),
-        merge_legend = TRUE)), clip = FALSE) +
-  wrap_elements(full = 
-      grid.grabExpr(
-        draw(figF,
-          heatmap_legend_side = "bottom",
-          annotation_legend_side = "bottom",
-          background = "transparent",
-          padding = unit(c(0, 1.5, 0.5, -1), "lines"),
-          merge_legend = TRUE)), clip = FALSE) +
-  plot_annotation(tag_levels = list(c("D", "E", "F"))) +
+p <- wrap_elements(plot = figA) +
+  wrap_elements(plot = figB) +
+  wrap_elements(full = plot_spacer() + plot_annotation(theme = theme(plot.background = element_rect(fill = "#ffffff")))) +
+  wrap_elements(full = grid.grabExpr(
+    draw(fig_treg,
+      heatmap_legend_side = "bottom",
+      align_heatmap_legend = "global_center",
+      background = "transparent",
+      padding = unit(c(0.5,1.5,0.5,0.5), "lines"))
+  ), clip = FALSE) +
+  wrap_elements(full = figE) +
+  plot_annotation(tag_levels = list(LETTERS[1:5])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(plot = p, prefixDir = "outs", fn = "fig3_citeseq_intro", devices = c("png", "pdf"), gwidth = 8.5, gheight = 11)
+saveFinalFigure(
+  plot = p,
+  prefixDir = "figures/outs",
+  fn = "fig3_final",
+  devices = c("png"),
+  addTimestamp = TRUE,
+  gwidth = 6.5,
+  gheight = 6)
+  
