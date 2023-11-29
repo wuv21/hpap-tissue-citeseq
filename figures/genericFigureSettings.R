@@ -103,6 +103,32 @@ unclipStripText <- function(g) {
   return(g2)
 }
 
+processGregFlowData <- function(rdsFn) {
+  dfLineageFilter <- readRDS(rdsFn)
+  
+  dfDiseaseScales <- dfLineageFilter %>%
+    filter(!grepl("^CD. Mem CD.*$", metric)) %>%
+    filter(!grepl("^CD. Mem .*\\+$", metric)) %>%
+    filter(grepl("CD. ", metric)) %>%
+    mutate(`Disease Status` = factor(`Disease Status`, levels = c("ND", "AAb+", "T1D"))) %>%
+    mutate(LN_type = factor(LN_type, levels = c("pLN", "mLN", "Spleen"))) %>%
+    mutate(cd = case_when(
+      str_detect(metric, "CD4") ~ "CD4",
+      str_detect(metric, "CD8") ~ "CD8")) %>%
+    mutate(tpop = case_when(
+      str_detect(metric, "Tn ") ~ "Tn",
+      str_detect(metric, "Tnl") ~ "Tnl",
+      str_detect(metric, "Tcm") ~ "Tcm",
+      str_detect(metric, "Tem ") ~ "Tem",
+      str_detect(metric, "Temra") ~ "Temra",
+      str_detect(metric, "Tn$") ~ "Tn",
+      str_detect(metric, "Tem$") ~ "Tem",
+      str_detect(metric, "CD4 Mem") ~ "Mem")) %>%
+    mutate(tpop = factor(tpop, levels = c("Tn", "Tnl", "Tcm", "Tem", "Temra", "Mem")))
+  
+  return(dfDiseaseScales)
+}
+
 saveFinalFigure <- function(
   plot,
   prefixDir = "../outs",
