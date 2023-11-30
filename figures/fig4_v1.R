@@ -38,27 +38,7 @@ parentDir <- "figures/greg_flow_data"
 ################################################################################
 # A - cd4 Tn differences in pLN
 ################################################################################
-dfLineageFilter <- readRDS(paste0(parentDir, "/rds/dfLineageFilter.rds"))
-
-dfDiseaseScales <- dfLineageFilter %>%
-  filter(!grepl("^CD. Mem CD.*$", metric)) %>%
-  filter(!grepl("^CD. Mem .*\\+$", metric)) %>%
-  filter(grepl("CD. ", metric)) %>%
-  mutate(`Disease Status` = factor(`Disease Status`, levels = c("ND", "AAb+", "T1D"))) %>%
-  mutate(LN_type = factor(LN_type, levels = c("pLN", "mLN", "Spleen"))) %>%
-  mutate(cd = case_when(
-    str_detect(metric, "CD4") ~ "CD4",
-    str_detect(metric, "CD8") ~ "CD8")) %>%
-  mutate(tpop = case_when(
-    str_detect(metric, "Tn ") ~ "Tn",
-    str_detect(metric, "Tnl") ~ "Tnl",
-    str_detect(metric, "Tcm") ~ "Tcm",
-    str_detect(metric, "Tem ") ~ "Tem",
-    str_detect(metric, "Temra") ~ "Temra",
-    str_detect(metric, "Tn$") ~ "Tn",
-    str_detect(metric, "Tem$") ~ "Tem",
-    str_detect(metric, "CD4 Mem") ~ "Mem")) %>%
-  mutate(tpop = factor(tpop, levels = c("Tn", "Tnl", "Tcm", "Tem", "Temra", "Mem")))
+dfDiseaseScales <- processGregFlowData(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
 figA <- dfDiseaseScales %>%
   filter(LN_type == "pLN" & cd == "CD4") %>%
@@ -182,7 +162,11 @@ module15_df <- scale(t(module15AvgExp$RNA)) %>%
   as.data.frame(.) %>%
   mutate(category = rownames(.)) %>%
   separate(category, sep = "_", into = c("disease", "cluster")) %>%
-  pivot_wider(names_from = disease, values_from = c(1:10))
+  pivot_wider(names_from = disease, values_from = c(1:10)) %>%
+  relocate(c("cluster"), c(1))
+
+# TODO MAKE SURE THAT CLUSTER IS IN THE FIRST COLUMN
+# RERUN
 
 module15_mat <- as.matrix(module15_df[, c(2:ncol(module15_df))])
 rownames(module15_mat) <- module15_df$cluster
