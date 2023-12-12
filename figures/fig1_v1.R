@@ -1,3 +1,5 @@
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
 library(Seurat)
@@ -402,7 +404,7 @@ saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
   fn = "fig1_final",
-  devices = c("png"),
+  devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,
   gheight = 8)

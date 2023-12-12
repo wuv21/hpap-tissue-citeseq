@@ -1,4 +1,5 @@
 # note that this code is written to be run from the project base directory
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -227,16 +228,23 @@ figE <- plotCombinatorialDEGLollipop(
       !(gene %in% commonGenesByDisease$`AAb+`$gene) &
       !(gene %in% commonGenesByDisease$`T1D`$gene)), title = "test") +
   coord_cartesian(clip = "off") +
+  theme_classic() +
   subplotTheme +
   theme(
-    legend.position = "bottom",
-    legend.box.margin = margin(t = -10, b = 0),
-    axis.text.y = element_text(size = 5, color = "#000000"),
-    axis.text.x = element_text(size = 6, color = "#000000"),
-    axis.title = element_text(size = 6),
+    axis.line = element_line(color = "#000000"),
+    panel.grid.major.y = element_line(color = "#dddddd"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(color = "#000000", size = 6),
+    axis.text.y = element_text(color = "#000000", size = 5),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
     legend.title = element_text(size = 6),
     legend.text = element_text(size = 6),
+    legend.position = "bottom",
+    legend.box.margin = margin(t = -10, b = 0),
     plot.title = element_blank(),
+    strip.background = element_blank(),
     strip.text = element_markdown(hjust = 0.5, size = 6)) +
   facet_wrap(~ matchup,
     scales = "free",
@@ -393,7 +401,7 @@ saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
   fn = "fig3_final",
-  devices = c("png"),
+  devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 6.5,
   gheight = 6)

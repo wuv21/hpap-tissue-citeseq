@@ -1,4 +1,5 @@
 # note that this code is written to be run from the project base directory
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -200,6 +201,13 @@ fig_vlnCTG <- data.frame(
     axis.text = element_text(size = 6, color = "#000000")
     )
 
+findMarkersCombinatorial(
+  seu_TemTemra,
+  combVar = "Disease_Status",
+  features = c("CXCR3", "TOX", "GZMK")
+) %>%
+  select(-p_val_adj)
+
 seu_TemTemra$CXCR3pos <- seu_TemTemra@assays$RNA@data["CXCR3", ] > 0.5
 seu_TemTemra$TOXpos <- seu_TemTemra@assays$RNA@data["TOX", ] > 0.5
 seu_TemTemra$GZMKpos <- seu_TemTemra@assays$RNA@data["GZMK", ] > 0.5
@@ -220,6 +228,10 @@ sharedMarkers <- data.frame(
   mutate(rowID = factor(row_number())) %>%
   mutate(nudge = n + max(n) * 0.05) %>%
   mutate(group = paste(CXCR3, TOX, GZMK, sep = "_"))
+
+ggpubr::compare_means(data = sharedMarkers, formula = proportion ~ disease, group.by = "group", p.adjust.method = "BH") %>%
+  select(group, group1, group2, p, p.adj, method) %>%
+  print(n = 30)
 
 sharedMarkers_boxPlot <- sharedMarkers %>%
   ggplot(aes(x = rowID, y = proportion, fill = disease)) +
@@ -539,7 +551,7 @@ saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
   fn = "fig5_final",
-  devices = c("png"),
-  addTimestamp = FALSE,
+  devices = c("pdf", "png"),
+  addTimestamp = TRUE,
   gwidth = 8,
   gheight = 9)
