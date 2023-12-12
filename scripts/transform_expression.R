@@ -20,12 +20,18 @@ expression_stderr_bars = function(sotib, compareVar, annotVar, barcodeVar = "cel
     mutate(ymin = mid - barinc)
 }
 
-mean_expression = function(sotib, compareVar, annotVar, barcodeVar = "cell") {
-  print(sotib)
-  sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
-  sotib %>%
-    group_by(!!sym(compareVar), !!sym(annotVar)) %>%
-    summarize_all(mean)
+mean_expression = function(sotib, compareVar, annotVar=NULL, barcodeVar = "cell") {
+  if (!is.null(annotVar)) {
+    sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar, annotVar)]
+    sotib %>%
+      group_by(!!sym(compareVar), !!sym(annotVar)) %>%
+      summarize_all(mean)
+  } else {
+    sotib = sotib[,c(colnames(sotib[,attr(sotib, "datacol")]), compareVar)]
+    sotib %>%
+      group_by(!!sym(compareVar)) %>%
+      summarize_all(mean)
+  }
 }
 
 scale_expression = function(sotib, compareVar, by, barcodeVar = "cell") {
@@ -43,11 +49,12 @@ scale_expression = function(sotib, compareVar, by, barcodeVar = "cell") {
   })
 }
 
-fillPvalsFromFindFeaturesCombinatorial = function(scaledExp, wuv_compres, modality, goi=NULL) {
+fillPvalsFromFindFeaturesCombinatorial = function(scaledExp, wuv_compres, modality, pvalue_column, na_fill_value, goi=NULL) {
   wuv_compres = wuv_compres[[attr(scaledExp, "cluster")]]
   wuv_compres = cbind(wuv_compres, do.call(rbind, strsplit(gsub("[_]vs[_]", "-",wuv_compres$matchup), "-")))
   features = rownames(scaledExp)
   pltcomps = matrix(nrow = length(features), ncol = 3)
+  pltcomps[,] = na_fill_value
   rownames(pltcomps) = features
   colnames(pltcomps) = c("ND-AAb+", "ND-T1D", "AAb+-T1D")
   for(comp in strsplit(colnames(pltcomps), '-')) {
@@ -70,10 +77,10 @@ fillPvalsFromFindFeaturesCombinatorial = function(scaledExp, wuv_compres, modali
     rows = which(rownames(pltcomps) %in% rownames(rele_res))
     pvalues = rele_res[rownames(pltcomps)[rows],]
     if (length(seq_along(rele_res[,1])) > 0) {
-      pltcomps[,sprintf("%s-%s", comp[1], comp[2])] = pvalues[rownames(pltcomps),]$p_val_adj_all
+      pltcomps[,sprintf("%s-%s", comp[1], comp[2])] = pvalues[rownames(pltcomps),][[pvalue_column]]
     }
   }
-  pltcomps
+  apply(pltcomps, 2, function(x) ifelse(is.na(x), na_fill_value, x))
 }
 
 pvalues2pubr = function(pvalues, gene, xlvl, bracketx) {
