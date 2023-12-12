@@ -1,0 +1,23 @@
+gene,modality,adt,source
+CXCR3,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+GZMB,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+IFNG,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+PRF1,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+CCL5,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+TBX21,RNA,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+EOMES,RNA,,
+CCR5,RNA,,https://www.jci.org/articles/view/77837
+TCF7,RNA,,"Gearty, et al., Nature, 2022"
+TOX,RNA,,"Gearty, et al., Nature, 2022"
+GZMK,RNA,,"Gearty, et al., Nature, 2022"
+FASLG,RNA,,"Gearty, et al., Nature, 2022"
+PDCD1,RNA,,"Gearty, et al., Nature, 2022"
+CD7,RNA,,"Gearty, et al., Nature, 2022"
+CXCR6,RNA,,"Gearty, et al., Nature, 2022"
+SELL,RNA,,"Gearty, et al., Nature, 2022"
+LEF1,RNA,,"Gearty, et al., Nature, 2022"
+CXCR3,ADT,A0156,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3065205/
+PD1,ADT,A0088,"Gearty, et al., Nature, 2022"
+CD62L,ADT,A0147,"Gearty, et al., Nature, 2022"
+CD7,ADT,A0066,"Gearty, et al., Nature, 2022"
+CD45RO,ADT,A0087,"Gearty, et al., Nature, 2022"

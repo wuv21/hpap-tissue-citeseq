@@ -1,4 +1,6 @@
 # note that this code is written to be run from the project base directory
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -449,8 +451,8 @@ moduleTraitCorRes <- GetModuleTraitCorrelation(seuWcgna)
 corMatrix <- do.call("rbind", moduleTraitCorRes$cor)[, mods_of_interest]
 fdrMatrix <- do.call("rbind", moduleTraitCorRes$fdr)[, mods_of_interest]
 
-rownames(corMatrix) <- gsub("all_cells", "Aggregate (Total cells)", corMatrix)
-rownames(fdrMatrix) <- gsub("all_cells", "Aggregate (Total cells)", fdrMatrix)
+rownames(corMatrix) <- gsub("all_cells", "Aggregate (Total cells)", rownames(corMatrix))
+rownames(fdrMatrix) <- gsub("all_cells", "Aggregate (Total cells)", rownames(fdrMatrix))
 
 tmp <- Heatmap(
   matrix = corMatrix,
@@ -520,7 +522,7 @@ saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
   fn = "fig2_final",
-  devices = c("png"),
+  devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,
   gheight = 6.75)

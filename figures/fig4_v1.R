@@ -1,4 +1,5 @@
 # note that this code is written to be run from the project base directory
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -212,7 +213,6 @@ fig_module15 <- Heatmap(
 cd4Clusters <- levels(manualClusterOrder)[grepl("^CD4", levels(manualClusterOrder))]
 seu_cd4_pln <- subset(seu, subset = TissueCondensed == "pLN" & manualAnnot %in% cd4Clusters)
 
-
 frequencyPlots <- list(
   geom_boxplot(fill = "#00000000", width = 0.8, outlier.shape = NA),
   geom_point(position = position_dodge(width = 0.75), size = 1, stroke = 0.2, alpha = 0.4),
@@ -230,7 +230,7 @@ frequencyPlots <- list(
     axis.text.y = element_text(size = 6, color = "#000000"),
     axis.title.y = element_text(size = 6)))
 
-fig_naiveCD4Freq <- data.frame(
+naiveCD4Freq <- data.frame(
   donor = seu_cd4_pln$DonorID,
   disease = seu_cd4_pln$Disease_Status,
   manualAnnot = seu_cd4_pln$manualAnnot
@@ -238,7 +238,12 @@ fig_naiveCD4Freq <- data.frame(
   group_by(donor, disease, manualAnnot) %>%
   summarize(nCells = n()) %>%
   mutate(prop = nCells / sum(nCells) * 100) %>%
-  filter(grepl("CD4 naive", manualAnnot)) %>%
+  filter(grepl("CD4 naive", manualAnnot))
+
+
+ggpubr::compare_means(data = naiveCD4Freq, prop ~ disease, group.by = "manualAnnot", p.adjust.method = "BH")
+
+fig_naiveCD4Freq <- naiveCD4Freq %>%
   ggplot(aes(x = manualAnnot, y = prop, color = disease)) +
   frequencyPlots +
   labs(y = "% of pLN CD4+ cells")
@@ -252,7 +257,7 @@ fig_naiveCD4Freq <- data.frame(
 cd8Clusters <- levels(manualClusterOrder)[grepl("^CD8", levels(manualClusterOrder))]
 seu_cd8_pln <- subset(seu, subset = TissueCondensed == "pLN" & manualAnnot %in% cd8Clusters)
 
-fig_naiveCD8Freq <- data.frame(
+naiveCD8Freq <- data.frame(
   donor = seu_cd8_pln$DonorID,
   disease = seu_cd8_pln$Disease_Status,
   manualAnnot = seu_cd8_pln$manualAnnot
@@ -260,7 +265,11 @@ fig_naiveCD8Freq <- data.frame(
   group_by(donor, disease, manualAnnot) %>%
   summarize(nCells = n()) %>%
   mutate(prop = nCells / sum(nCells) * 100) %>%
-  filter(grepl("CD8 naive", manualAnnot)) %>%
+  filter(grepl("CD8 naive", manualAnnot))
+
+ggpubr::compare_means(data = naiveCD8Freq, prop ~ disease, group.by = "manualAnnot", p.adjust.method = "BH")
+
+fig_naiveCD8Freq <- naiveCD8Freq %>%
   ggplot(aes(x = manualAnnot, y = prop, color = disease)) +
   frequencyPlots +
   labs(y = "% of pLN CD8+ cells")
@@ -293,6 +302,7 @@ fig_naiveGenesOfInterest <- Reduce('+', VlnPlot(
     axis.title = element_blank(),
     plot.margin = margin(t = 5, b = 0, l = 3, r = 3),
     legend.position = "none")
+
 
 ################################################################################
 # Fig G: cd4 degs
@@ -373,6 +383,11 @@ fig_cd4Degs <- (fig4DegLollipops(module15Deg_cd4Naive1, "CD4 naive #1") +
   plot_layout(heights = c(99, 1))
 
 
+module15Deg_cd4Naive2 %>% 
+  mutate(gene = rownames(.)) %>%
+  filter(gene %in% naiveGenesOfInterest)
+
+
 ################################################################################
 # Fig H: cd8 degs
 ################################################################################
@@ -400,6 +415,19 @@ fig_cd8Degs <- (fig4DegLollipops(module15Deg_cd8Naive1, "CD8 naive #1") +
   coord_cartesian(clip = "off") +
   theme(plot.margin = margin(t = 2.5, b = -2)) +
   plot_layout(heights = c(99, 1))
+
+
+module15Deg_cd8Naive2 %>% 
+  mutate(gene = rownames(.)) %>%
+  filter(gene %in% naiveGenesOfInterest)
+
+
+findMarkersCombinatorial(
+  seuratObj = subset(seu_naiveT_pln, manualAnnot == "CD8 naive #2"),
+  combVar = "Disease_Status",
+  features = naiveGenesOfInterest
+) %>%
+  select(-p_val_adj)
 
 ################################################################################
 # Final layout and plot all
@@ -439,7 +467,7 @@ saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
   fn = "fig4_final",
-  devices = c("png"),
+  devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,
   gheight = 6)
