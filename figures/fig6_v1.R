@@ -77,7 +77,7 @@ convert
 so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
 
 #################################################################################
-# C - NK cells ranked bar plot
+# %% C - NK cells ranked bar plot
 ################################################################################
 
 sig_genes = readRDS("rds/wuv_compres_rna_genelist_V1.rds")
@@ -125,7 +125,7 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   )
 
 #################################################################################
-# D/E - NK cells violin/boxes
+# %% D/E - NK cells violin/boxes
 ################################################################################
 
 ANNOTVAR="groupedAnnot"
@@ -182,19 +182,23 @@ for (g in genes_of_interest) {
 }
 
 #################################################################################
-# E/F - Heagmaps of differentially expressed genes between GZMB+/- NK cells
+# %% E/F - Heagmaps of differentially expressed genes between GZMB+/- NK cells
 ################################################################################
 lod = 0.25
-
 totalnk = subset(so_pln_only, manualAnnot %in% c("NK/ILC"))
 totalnk[["groupedAnnot"]] = "totalnk"
 totalnk[["expresses_gzmb"]] = ifelse(FetchData(totalnk, "GZMB") >= lod, T, F)
 totalnk[["expresses_gzmb"]]
 DefaultAssay(totalnk) = "RNA"
-Idents(totalnk) = "expresses_gzmb"
-de_rna = FindMarkers(totalnk, ident.1 = T, ident.2 = F, assay = "RNA", logfc.threshold = 0.1)
+nkexprgzmb = subset(totalnk, expresses_gzmb)
+Idents(nkexprgzmb) = "Disease_Status"
+Idents(nkexprgzmb)
+de_rna = FindMarkers(nkexprgzmb, ident.1 = "T1D", ident.2 = "ND", assay = "RNA", logfc.threshold = 0.1)
+de_rna[de_rna$p_val_adj <=0.05,]
+
 de_rna = de_rna[de_rna$p_val_adj <=0.05,]
 top20ish = de_rna[which(de_rna$avg_log2FC >= sort(de_rna$avg_log2FC, decreasing = T)[20]),]
+top20ish
 top20ish$dir = "up"
 bottom20ish = de_rna[which(de_rna$avg_log2FC <= sort(de_rna$avg_log2FC, decreasing = F)[20]),]
 bottom20ish$dir = "down"
@@ -202,8 +206,9 @@ de_rna = rbind(top20ish, bottom20ish)
 de_rna$pvalsymm = pValSymnum(de_rna$p_val_adj)
 
 
-rna = seuratObjMetaTibble(totalnk, assay = "RNA")
-attr(rna, "datacol") = seq_along(rownames(totalnk))+1
+rna = seuratObjMetaTibble(nkexprgzmb, assay = "RNA")
+rna[c("Disease_Status", "GZMB")] %>% group_by(Disease_Status) %>% summarize(GZMB = mean(GZMB))
+attr(rna, "datacol") = seq_along(rownames(nkexprgzmb))+1
 rna_meanExp = as.data.frame(mean_expression(rna, compareVar = "expresses_gzmb", annotVar = "groupedAnnot"))
 
 meanne = t(rna_meanExp[,c("expresses_gzmb", rownames(de_rna))])[-1,]
