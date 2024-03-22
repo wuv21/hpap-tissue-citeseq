@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -185,13 +185,23 @@ Idents(seu_pln_treg) <- "Disease_Status"
 
 # From FindMarkers doc: positive values indicate that the gene is more highly
 # expressed in the first group
-FindMarkers(
-  object = seu_pln_treg,
+treg_deg <- findMarkersCombinatorial(
+  seuratObj = seu_pln_treg,
   features = treg_gene_list,
-  ident.1 = "ND",
-  ident.2 = "AAb+",
-  logfc.threshold	= 0
+  combVar = "Disease_Status",
+  logfc.threshold	= 0,
+  min.pct = 0.05,
 )
+
+treg_deg_stats <- treg_deg %>%
+  mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
+  mutate(p_val_sym = pValSymnum(p_val_adj_all)) %>%
+  group_by(gene) %>%
+  arrange(matchup, .by_group = TRUE) %>%
+  summarize(final = paste0(p_val_sym, collapse = " / "),
+    matches = paste0(matchup, collapse = " / ")) %>%
+  mutate(gene = factor(gene, levels = rownames(treg_avg_exp_rna))) %>%
+  arrange(gene)
 
 fig_treg <- Heatmap(
   matrix = t(scale(t(treg_avg_exp_rna))),
@@ -202,18 +212,104 @@ fig_treg <- Heatmap(
   column_names_centered = TRUE,
   column_names_gp = gpar(fontsize = 6),
   row_dend_width = unit(3, "points"),
-  column_names_rot = 0,
+  column_names_rot = 45,
+  width = unit(1.5, "cm"),
   name = "Scaled Average Expression",
+  right_annotation = rowAnnotation(
+    `tests` = anno_text(treg_deg_stats$final, gp = gpar(fontsize = 4), show_name = FALSE),
+    show_annotation_name = TRUE,
+    show_legend = FALSE,
+    width = unit(9, "mm"),
+    annotation_name_gp = gpar(fontsize = 4),
+    annotation_name_rot = 45),
   heatmap_legend_param = list(
     direction = "horizontal",
     title_position = "topcenter",
-    title_gp = gpar(fontsize = 6, fontface = "plain"),
-    labels_gp = gpar(fontsize = 6),
+    title_gp = gpar(fontsize = 4, fontface = "plain"),
+    labels_gp = gpar(fontsize = 4),
     grid_height = unit(1.25, "mm"),
     legend_height = unit(2, "mm"),
     legend_width = unit(10, "mm")),
   row_title_gp = gpar(fontsize = 6)
 )
+
+
+################################################################################
+# NEW: subcluster cd4 tcm/treg
+################################################################################
+# seu_pln_treg_sub <- seu_pln_treg
+# 
+# Idents(seu_pln_treg_sub) <- "manualAnnot"
+# seu_pln_treg_sub <- FindNeighbors(seu_pln_treg_sub, assay = "RNA", reduction = "harmonyRNA", dims = 1:30)
+# 
+# seu_pln_treg_sub <- FindSubCluster(
+#   seu_pln_treg_sub,
+#   cluster = "CD4 Tcm/Treg",
+#   graph.name = "RNA_nn",
+#   subcluster.name = "subcluster",
+#   resolution = 0.5)
+# 
+# 
+# customCd4Genes <- read.csv("miscellaneous_gene_lists/CD4_genes.csv")
+# 
+# labellerAdt <- tsaCatalog$cleanName
+# names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
+# 
+# subclusterAdtRidges <- RidgePlot(seu_pln_treg_sub,
+#   features = customCd4Genes[customCd4Genes$modality == "ADT", "DNA_ID"],
+#   group.by = "subcluster",
+#   combine = FALSE)
+# 
+# subclusterAdtRidges <- lapply(subclusterAdtRidges, function(x) {
+#   x$labels$title <- labellerAdt[x$labels$title]
+#   
+#   x <- x +
+#     subplotTheme +
+#     theme(
+#       plot.margin = margin(3,3,3,3),
+#       plot.title = element_text(size = BASEPTFONTSIZE),
+#       axis.text = element_text(size = BASEPTFONTSIZE),
+#       axis.title.y = element_blank(),
+#       axis.title.x = element_blank(),
+#       legend.position = "blank") 
+#   
+#   x$layers[[1]]$geom$default_aes$alpha <- 0.3
+#   
+#   return(x)
+# })
+# 
+# subclusterRnaRidges <- RidgePlot(seu_pln_treg_sub,
+#   features = toupper(customCd4Genes[customCd4Genes$modality == "RNA", "geneName"]),
+#   group.by = "subcluster",
+#   combine = FALSE)
+# 
+# subclusterRnaRidges <- lapply(subclusterRnaRidges, function(x) {
+#   x <- x +
+#     subplotTheme +
+#     theme(
+#       plot.margin = margin(3,3,3,3),
+#       plot.title = element_text(size = BASEPTFONTSIZE),
+#       axis.text = element_text(size = BASEPTFONTSIZE),
+#       axis.title.y = element_blank(),
+#       axis.title.x = element_blank(),
+#       legend.position = "blank") 
+#   
+#   x$layers[[1]]$geom$default_aes$alpha <- 0.3
+#   
+#   return(x)
+# })
+# 
+# subclusterRnaVln <- VlnPlot(seu_pln_treg_sub,
+#   features = toupper(customCd4Genes[customCd4Genes$modality == "RNA", "geneName"]),
+#   group.by = "subcluster",
+#   pt.size = 0.2,
+#   combine = TRUE)
+# 
+# subclusterRnaVln &
+#     theme(legend.position = "blank",
+#       axis.text = element_text(size = 5),
+#       plot.title = element_text(size = 7),
+#       axis.title = element_blank())
 
 
 
@@ -253,122 +349,6 @@ figE <- plotCombinatorialDEGLollipop(
     "ND_vs_T1D" = glue("<span style='color: {COLORS$disease['T1D']};'>up in T1D</span> | <span style='color: {COLORS$disease['ND']};'>up in ND</span>"),
     "T1D_vs_AAb+" = glue("<span style='color: {COLORS$disease['AAb+']};'>up in AAb+</span> | <span style='color: {COLORS$disease['T1D']};'>up in T1D</span>"))))
   
-
-
-################################################################################
-# potential figure - harmonizome
-harmonizome_gene_list <- read.csv("figures/fig3_gene_lists/harmonizome_foxp3_targets.txt", header = FALSE, sep = ",")$V1
-harmonizome_gene_list <- intersect(rownames(seu_pln_treg), harmonizome_gene_list)
-
-harmonizome_avg_exp <- AverageExpression(
-  object = seu_pln_treg,
-  assays = "RNA",
-  return.seurat = FALSE,
-  features = harmonizome_gene_list,
-  group.by = "Disease_Status",
-  slot = "data")
-
-harmonizome_avg_exp <- harmonizome_avg_exp$RNA
-
-Idents(seu_pln_treg) <- "Disease_Status"
-
-fig_harmonizome <- Heatmap(
-  matrix = t(scale(t(harmonizome_avg_exp))),
-  cluster_columns = FALSE,
-  cluster_rows = TRUE,
-  show_row_names = FALSE,
-  row_names_gp = gpar(fontsize = 6),
-  column_names_centered = TRUE,
-  column_names_gp = gpar(fontsize = 6),
-  row_dend_width = unit(3, "points"),
-  column_names_rot = 0,
-  name = "Scaled Average Expression",
-  heatmap_legend_param = list(
-    direction = "vertical",
-    title_position = "topcenter",
-    title_gp = gpar(fontsize = 6, fontface = "plain"),
-    labels_gp = gpar(fontsize = 6),
-    grid_height = unit(1.25, "mm"),
-    legend_width = unit(10, "mm")),
-  row_title_gp = gpar(fontsize = 6)
-)
-
-# From FindMarkers doc: positive values indicate that the gene is more highly
-# expressed in the first group
-harmonizomeDeg <- findMarkersCombinatorial(
-  seuratObj = seu_pln_treg,
-  combVar = "Disease_Status",
-  assay = "RNA",
-  features = harmonizome_gene_list
-)
-
-harmonizomeDegNoCommon <- harmonizomeDeg %>%
-  filter(!gene %in% commonGenes$gene)
-
-tmp <- harmonizomeDegNoCommon %>%
-  group_by(matchup, upregulated) %>%
-  filter(p_val_adj_all < 0.05) %>%
-  filter(matchup == "ND_vs_AAb+" & upregulated == "ND") %>%
-  arrange(desc(avg_log2FC)) %>%
-  # slice_max(abs(avg_log2FC), n = 10) %>%
-  select(-p_val, -p_val_adj)
-
-
-################################################################################
-# mln (potential figure f)
-################################################################################
-seu_mln_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "mesLN")
-
-treg_mln_avg_exp <- AverageExpression(
-  object = seu_mln_treg,
-  assays = "RNA",
-  return.seurat = FALSE,
-  features = treg_gene_list,
-  group.by = "Disease_Status",
-  slot = "data")
-
-treg_mln_avg_exp_rna <- treg_mln_avg_exp$RNA
-
-Idents(seu_mln_treg) <- "Disease_Status"
-
-
-treg_mln_deg <- findMarkersCombinatorial(
-  seuratObj = seu_mln_treg,
-  combVar = "Disease_Status",
-  assay = "RNA",
-  features = treg_gene_list
-)
-
-treg_mln_deg %>%
-  filter(p_val_adj_all < 0.05) %>%
-  arrange(desc(avg_log2FC)) %>%
-  select(-p_val, -p_val_adj)
-
-
-
-fig_treg_mln <- Heatmap(
-  matrix = t(scale(t(treg_mln_avg_exp_rna))),
-  cluster_columns = FALSE,
-  cluster_rows = TRUE,
-  show_row_names = TRUE,
-  row_names_gp = gpar(fontsize = 6),
-  column_names_centered = TRUE,
-  column_names_gp = gpar(fontsize = 6),
-  row_dend_width = unit(3, "points"),
-  column_names_rot = 0,
-  name = "Scaled Average Expression",
-  heatmap_legend_param = list(
-    direction = "vertical",
-    title_position = "topcenter",
-    title_gp = gpar(fontsize = 6, fontface = "plain"),
-    labels_gp = gpar(fontsize = 6),
-    grid_height = unit(1.25, "mm"),
-    legend_width = unit(15, "mm")),
-  row_title_gp = gpar(fontsize = 6)
-)
-
-
-
 
 
 ################################################################################

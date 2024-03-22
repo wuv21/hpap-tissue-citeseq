@@ -532,9 +532,9 @@ load("rds/postManualAnnotSubset.rData")
 # post annotation graphs
 ################################################################################
 # HSP signature graphs
-seuDf <- FetchData(object = seuMerged,
-  vars = c("TissueCondensed", "heatShockProgram1", "Disease_Status", "manualAnnot", "RNA_snn_res.1", "DonorID")) %>%
-  mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
+# seuDf <- FetchData(object = seuMerged,
+#   vars = c("TissueCondensed", "heatShockProgram1", "Disease_Status", "manualAnnot", "RNA_snn_res.1", "DonorID")) %>%
+#   mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
 
 # seuDf %>%
 #   ggplot(aes(x = DonorID, y = heatShockProgram1, fill = TissueCondensed)) +
@@ -563,8 +563,7 @@ seuDf <- FetchData(object = seuMerged,
 #   geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
 #   geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
 
-
-rm(seuDf)
+# rm(seuDf)
 
 ##### START run this again after loading manual annot rdata
 hspCutoff <- quantile(seuMerged$heatShockProgram1, probs = 0.95)

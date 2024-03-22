@@ -100,6 +100,72 @@ figB <- dfDiseaseScales %>%
     axis.text.y = element_text(size = 6, color = "#000000"),
     axis.title.y = element_text(size = 6, color = "#000000"))
 
+################################################################################
+# ??? - subcluster for the cd8 memory cluster
+################################################################################
+
+# seu_cd8Eff <- subset(seu,
+#   subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tem/Temra"))
+
+seu <- FindNeighbors(seu, assay = "RNA", reduction = "harmonyRNA", dims = 1:30)
+
+Idents(seu) <- "manualAnnot"
+seu <- FindSubCluster(
+  seu,
+  cluster = "CD8 Tem/Temra",
+  graph.name = "RNA_nn",
+  subcluster.name = "subcluster",
+  resolution = 0.3)
+
+customCd8Genes <- read.csv("miscellaneous_gene_lists/CD8_genes.csv")
+
+labellerAdt <- tsaCatalog$cleanName
+names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
+
+seuForGraph <- subset(seu,
+  subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tem/Temra", "CD8 naive #1", "CD8 naive #2"))
+
+seuForGraph$forGraph <- ifelse(is.na(seuForGraph$subcluster), manualAnnot, seuForGraph$subcluster)
+
+subclusterAdtRidges <- RidgePlot(seuForGraph,
+  features = customCd8Genes[customCd8Genes$modality == "ADT", "DNA_ID"],
+  group.by = "forGraph",
+  combine = FALSE)
+
+subclusterAdtRidges <- lapply(subclusterAdtRidges, function(x) {
+  x$labels$title <- labellerAdt[x$labels$title]
+
+  x <- x +
+    subplotTheme +
+    theme(
+      plot.margin = margin(3,3,3,3),
+      plot.title = element_text(size = BASEPTFONTSIZE),
+      axis.text = element_text(size = BASEPTFONTSIZE),
+      axis.title.y = element_blank(),
+      axis.title.x = element_blank(),
+      legend.position = "blank")
+
+  x$layers[[1]]$geom$default_aes$alpha <- 0.5
+
+  return(x)
+})
+
+
+wrap_plots(subclusterAdtRidges, nrow = 4)
+
+
+subclusterRnaVln <- VlnPlot(seuForGraph,
+  features = toupper(customCd8Genes[customCd8Genes$modality == "RNA", "geneName"]),
+  group.by = "forGraph",
+  pt.size = 0.2,
+  combine = TRUE)
+
+subclusterRnaVln &
+    theme(legend.position = "blank",
+      axis.text = element_text(size = 5),
+      plot.title = element_text(size = 7),
+      axis.title = element_blank())
+
 
 ################################################################################
 # ??? - effector gene list heatmap
