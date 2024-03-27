@@ -10,7 +10,6 @@ source("figures/genericFigureSettings.R")
 source("scripts/transform_expression.R")
 library(Seurat)
 library(grid)
-
 #################################################################################
 # A - B cell differences in pLN
 ################################################################################
@@ -307,7 +306,7 @@ for (g in genes_of_interest) {
 }
 
 #################################################################################
-# D/E/Fii - B class-switched memory #1 and B IgM+ memory/marginal zone #2 cells heavy chain violin/box plots
+# %% D/E/Fii - B class-switched memory #1 and B IgM+ memory/marginal zone #2 cells heavy chain violin/box plots
 ################################################################################
 ANNOTVAR="manualAnnot"
 
@@ -375,6 +374,7 @@ for (clust in c("B class-switched memory #1", "B IgM+ memory/marginal zone like 
   }
 }
 
+# %%
 fig7layout <- c(
   patchwork::area(1,1,7,2), # a
   patchwork::area(1,3,7,6), # b

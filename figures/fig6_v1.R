@@ -1,3 +1,4 @@
+# %%
 library(magrittr)
 library(ggplot2)
 library(languageserver)
@@ -12,7 +13,7 @@ library(Seurat)
 library(grid)
 
 #################################################################################
-# A - B cell differences in NK cells
+# %% A - B cell differences in NK cells
 ################################################################################
 fd = readRDS("./figures/greg_flow_data/rds/dfLineageFilter.rds") %>%
   filter(LN_type == "pLN" & metric == "NK CD56dimCD16+") %>%
@@ -46,7 +47,7 @@ figA =  ggplot(fd, aes(`Disease Status`, value, color = `Disease Status`)) +
   )
 
 #################################################################################
-# B - Empty frame for flow traces
+# %% B - Empty frame for flow traces
 ################################################################################
   
 figB = ggplot() +
@@ -59,7 +60,7 @@ figB = ggplot() +
 
 
 ################################################################################
-# Data prep for C-G
+# %% Data prep for C-G
 ################################################################################
 
 COMPAREVAR="Disease_Status"
@@ -76,8 +77,10 @@ convert
 
 so_pln_only = soAddGroupedAnnotVar(so_pln_only, "manualAnnot", "groupedAnnot", convert)
 
+totalnk = subset(so_pln_only, !!sym(ANNOTVAR) == "All NK Cells combined")
+
 #################################################################################
-# C - NK cells ranked bar plot
+# %% C - NK cells ranked bar plot
 ################################################################################
 
 sig_genes = readRDS("rds/wuv_compres_rna_genelist_V1.rds")
@@ -125,15 +128,14 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   )
 
 #################################################################################
-# D/E - NK cells violin/boxes
+# %% D/E - NK cells violin/boxes
 ################################################################################
 
 ANNOTVAR="groupedAnnot"
 
 genes_of_interest = c("GZMB", "KLRB1")
 
-pltData = so_pln_only[genes_of_interest,]
-pltData = subset(pltData, !!sym(ANNOTVAR) == "All NK Cells combined")
+pltData = totalnk[genes_of_interest,]
 
 pltData = seuratObjMetaTibble(pltData, assay = "RNA")
 attr(pltData, "datacol") = seq_along(genes_of_interest)+1
@@ -182,28 +184,36 @@ for (g in genes_of_interest) {
 }
 
 #################################################################################
-# E/F - Heagmaps of differentially expressed genes between GZMB+/- NK cells
+# %% E/F - Heagmaps of differentially expressed genes between GZMB+/- NK cells
 ################################################################################
 lod = 0.25
-
-totalnk = subset(so_pln_only, manualAnnot %in% c("NK/ILC"))
-totalnk[["groupedAnnot"]] = "totalnk"
-totalnk[["expresses_gzmb"]] = ifelse(FetchData(totalnk, "GZMB") >= lod, T, F)
-totalnk[["expresses_gzmb"]]
+totalnk[["expresses_gzmb"]] = ifelse(FetchData(totalnk, "GZMB") >= lod, TRUE, FALSE)
 DefaultAssay(totalnk) = "RNA"
 Idents(totalnk) = "expresses_gzmb"
-de_rna = FindMarkers(totalnk, ident.1 = T, ident.2 = F, assay = "RNA", logfc.threshold = 0.1)
+de_rna = FindMarkers(totalnk, ident.1 = TRUE, ident.2 = FALSE, assay = "RNA", logfc.threshold = 0.1)
+de_rna[de_rna$p_val_adj <=0.05,]
+
 de_rna = de_rna[de_rna$p_val_adj <=0.05,]
-top20ish = de_rna[which(de_rna$avg_log2FC >= sort(de_rna$avg_log2FC, decreasing = T)[20]),]
+max_i = max(seq_along(rownames(de_rna)))
+if (max_i > 20) { 
+  max_i = 20
+}
+top20ish = de_rna[which(de_rna$avg_log2FC >= sort(de_rna$avg_log2FC, decreasing = T)[max_i] & de_rna$avg_log2FC > 0),]
+top20ish
 top20ish$dir = "up"
-bottom20ish = de_rna[which(de_rna$avg_log2FC <= sort(de_rna$avg_log2FC, decreasing = F)[20]),]
+bottom20ish = de_rna[which(de_rna$avg_log2FC <= sort(de_rna$avg_log2FC, decreasing = F)[max_i] & de_rna$avg_log2FC < 0),]
 bottom20ish$dir = "down"
+
+# Stop if any of the gene names are shared between top and bottom 20ish
+stopifnot(!any(rownames(top20ish) %in% rownames(bottom20ish)))
+
 de_rna = rbind(top20ish, bottom20ish)
 de_rna$pvalsymm = pValSymnum(de_rna$p_val_adj)
 
-
 rna = seuratObjMetaTibble(totalnk, assay = "RNA")
+rna[c("Disease_Status", "GZMB")] %>% group_by(Disease_Status) %>% summarize(GZMB = mean(GZMB))
 attr(rna, "datacol") = seq_along(rownames(totalnk))+1
+dim(rna)
 rna_meanExp = as.data.frame(mean_expression(rna, compareVar = "expresses_gzmb", annotVar = "groupedAnnot"))
 
 meanne = t(rna_meanExp[,c("expresses_gzmb", rownames(de_rna))])[-1,]
@@ -224,7 +234,9 @@ figE = ComplexHeatmap::Heatmap(
                         cell_fun = function(j, i, x, y, width, height, fill) {
                           if (j == 2) {
                             grid.text(de_rna_up[i,"pvalsymm"], x, y, gp = gpar(fontsize=4), vjust=0.75)
-                          }
+                          } #else {
+                            #grid.text(round(meanne[i,j], 2), x, y, gp = gpar(fontsize=4), vjust=0.75)
+                          #}
                         },
 
                         rect_gp = gpar(col = "white", lwd = 1), 
@@ -283,6 +295,24 @@ figF = ComplexHeatmap::Heatmap(
                         width=unit(0.8, "in"),
 )
 figF = grid.grabExpr(draw(figF, column_title = "", column_title_gp = gpar(fontsize = 5), padding = unit(c(0, 0, 0, 0), "pt"), gap=unit(0,"mm")))
+
+####################################
+# %% Compare GzmB+ NK cells between ND and T1D (DEG), what is different about them or are they the same?
+####################################
+
+gzmbplus = subset(totalnk, expresses_gzmb)
+gzmbplus
+table(gzmbplus[["expresses_gzmb"]][,1], gzmbplus[["manualAnnot"]][,1])
+table(gzmbplus[["groupedAnnot"]][,1], gzmbplus[["manualAnnot"]][,1])
+table(gzmbplus[["expresses_gzmb"]][,1], gzmbplus[["manualAnnot"]][,1])
+
+Idents(gzmbplus) = "Disease_Status"
+ff = FindMarkers(gzmbplus, ident.1 = "T1D", ident.2 = "ND",  assay = "RNA", logfc.threshold = 0.1)
+colnames(ff)
+ffs = ff[ff$p_val_adj <= 0.05,]
+write.table(ffs, "/srv/http/betts/hpap/totalnk_grzb_plus_deg_t1d_nd.csv", quote = F, sep = ',', row.names = TRUE)
+
+# %%
 fig6layout <- c(
   patchwork::area(1,1,30,12), #a
   patchwork::area(1,13,30,30), #b
@@ -298,6 +328,11 @@ plot = wrap_elements(full=figA) + figB +
   patchwork::plot_layout(design=fig6layout) +
   patchwork::plot_annotation(tag_levels = list(LETTERS[1:7]))
 
+pdf("/srv/http/betts/hpap/figures/fig6_pLN_v1.pdf", height = 5.5, width = 3.75)
+plot
+dev.off()
+
+# %%
 saveFinalFigure(plot=plot,
                 prefixDir = "/srv/http/betts/hpap/final_figures/",
                 fn = "fig6_v1",
