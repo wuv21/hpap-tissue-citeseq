@@ -1,0 +1,30 @@
+clusterOrder
+CD4 naive #1
+CD4 naive #2
+CD4 Tcm/Tem
+CD4 Tcm/Treg
+CD4 Tem/activated
+CD8 naive #1
+CD8 naive #2
+CD8 Tcm/Tem/Temra
+CD8 Tem/Trm #1
+CD8 Tem/Trm #2
+CD8 gdT/Helios+
+B naive #1
+B naive #2
+B naive #3
+B IgM+ memory #2
+B IgM+ memory #3
+B IgM+ memory #4
+B IgM+ memory/marginal zone like #1
+B IgM+ memory/marginal zone like #2
+B class-switched memory #1
+B class-switched memory #2
+B plasma cell/plasmablast
+B Tbet+/ABCs
+NK
+NK/ILC
+Monocyte #1
+Monocyte #2
+Monocyte #3/Innate mix
+DC
