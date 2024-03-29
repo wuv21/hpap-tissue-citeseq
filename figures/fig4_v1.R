@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -166,9 +166,6 @@ module15_df <- scale(t(module15AvgExp$RNA)) %>%
   pivot_wider(names_from = disease, values_from = c(1:10)) %>%
   relocate(c("cluster"), c(1))
 
-# TODO MAKE SURE THAT CLUSTER IS IN THE FIRST COLUMN
-# RERUN
-
 module15_mat <- as.matrix(module15_df[, c(2:ncol(module15_df))])
 rownames(module15_mat) <- module15_df$cluster
 
@@ -249,7 +246,6 @@ fig_naiveCD4Freq <- naiveCD4Freq %>%
   labs(y = "% of pLN CD4+ cells")
 
 
-
 ################################################################################
 # Fig E: frequency of naive CD8 in citeseq
 ################################################################################
@@ -273,7 +269,6 @@ fig_naiveCD8Freq <- naiveCD8Freq %>%
   ggplot(aes(x = manualAnnot, y = prop, color = disease)) +
   frequencyPlots +
   labs(y = "% of pLN CD8+ cells")
-
 
 
 ################################################################################
@@ -466,7 +461,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig4_final",
+  fn = "fig4_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,

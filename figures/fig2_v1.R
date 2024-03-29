@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 
 source("figures/genericFigureSettings.R")
@@ -327,11 +327,18 @@ seuWcgna <- tryCatch(
     return(tmp)
 })
 
-manualClusterOrder <- unique(seuWcgna$manualAnnot)
-manualClusterOrder <- factor(manualClusterOrder,
-  levels = customSortAnnotation(manualClusterOrder),
-  labels = stringr::str_trim(customSortAnnotation(manualClusterOrder)))
+# one of the clusters has an extra space so just removing it here
+seuWcgna$manualAnnot <- stringr::str_trim(seuWcgna$manualAnnot)
 
+# fix cluster naming
+seuWcgna$manualAnnot <- gsub("CD8 Tem/Temra", "CD8 Tcm/Tem/Temra", seuWcgna$manualAnnot)
+
+# cluster order
+manualClusterOrder <- unique(seuWcgna$manualAnnot)
+sortedClust <- customSortAnnotation(manualClusterOrder)
+manualClusterOrder <- factor(manualClusterOrder,
+  levels = sortedClust,
+  labels = sortedClust)
 
 ################################################################################
 # dendrogram

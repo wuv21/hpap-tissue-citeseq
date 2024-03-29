@@ -1,4 +1,4 @@
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -239,10 +239,18 @@ seu <- tryCatch(
   })
 
 
+# one of the clusters has an extra space so just removing it here
+seu$manualAnnot <- stringr::str_trim(seu$manualAnnot)
+
+# fix cluster naming
+seu$manualAnnot <- gsub("CD8 Tem/Temra", "CD8 Tcm/Tem/Temra", seu$manualAnnot)
+
+# cluster order
 manualClusterOrder <- unique(seu$manualAnnot)
+sortedClust <- customSortAnnotation(manualClusterOrder)
 manualClusterOrder <- factor(manualClusterOrder,
-  levels = customSortAnnotation(manualClusterOrder),
-  labels = stringr::str_trim(customSortAnnotation(manualClusterOrder)))
+  levels = sortedClust,
+  labels = sortedClust)
 
 
 figF <- DimPlot(seu, reduction = "rna.umap", group.by = "TissueCondensed") +
@@ -403,7 +411,7 @@ p <- wrap_elements(full = figAB_final, ignore_tag = TRUE) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig1_final",
+  fn = "fig1_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,

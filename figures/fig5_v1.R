@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -26,10 +26,18 @@ seu <- tryCatch(
     return(tmp)
   })
 
+# one of the clusters has an extra space so just removing it here
+seu$manualAnnot <- stringr::str_trim(seu$manualAnnot)
+
+# fix cluster naming
+seu$manualAnnot <- gsub("CD8 Tem/Temra", "CD8 Tcm/Tem/Temra", seu$manualAnnot)
+
+# cluster order
 manualClusterOrder <- unique(seu$manualAnnot)
+sortedClust <- customSortAnnotation(manualClusterOrder)
 manualClusterOrder <- factor(manualClusterOrder,
-  levels = customSortAnnotation(manualClusterOrder),
-  labels = stringr::str_trim(customSortAnnotation(manualClusterOrder)))
+  levels = sortedClust,
+  labels = sortedClust)
 
 seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D"))
 
@@ -100,72 +108,6 @@ figB <- dfDiseaseScales %>%
     axis.text.y = element_text(size = 6, color = "#000000"),
     axis.title.y = element_text(size = 6, color = "#000000"))
 
-################################################################################
-# ??? - subcluster for the cd8 memory cluster
-################################################################################
-
-# seu_cd8Eff <- subset(seu,
-#   subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tem/Temra"))
-
-seu <- FindNeighbors(seu, assay = "RNA", reduction = "harmonyRNA", dims = 1:30)
-
-Idents(seu) <- "manualAnnot"
-seu <- FindSubCluster(
-  seu,
-  cluster = "CD8 Tem/Temra",
-  graph.name = "RNA_nn",
-  subcluster.name = "subcluster",
-  resolution = 0.3)
-
-customCd8Genes <- read.csv("miscellaneous_gene_lists/CD8_genes.csv")
-
-labellerAdt <- tsaCatalog$cleanName
-names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
-
-seuForGraph <- subset(seu,
-  subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tem/Temra", "CD8 naive #1", "CD8 naive #2"))
-
-seuForGraph$forGraph <- ifelse(is.na(seuForGraph$subcluster), manualAnnot, seuForGraph$subcluster)
-
-subclusterAdtRidges <- RidgePlot(seuForGraph,
-  features = customCd8Genes[customCd8Genes$modality == "ADT", "DNA_ID"],
-  group.by = "forGraph",
-  combine = FALSE)
-
-subclusterAdtRidges <- lapply(subclusterAdtRidges, function(x) {
-  x$labels$title <- labellerAdt[x$labels$title]
-
-  x <- x +
-    subplotTheme +
-    theme(
-      plot.margin = margin(3,3,3,3),
-      plot.title = element_text(size = BASEPTFONTSIZE),
-      axis.text = element_text(size = BASEPTFONTSIZE),
-      axis.title.y = element_blank(),
-      axis.title.x = element_blank(),
-      legend.position = "blank")
-
-  x$layers[[1]]$geom$default_aes$alpha <- 0.5
-
-  return(x)
-})
-
-
-wrap_plots(subclusterAdtRidges, nrow = 4)
-
-
-subclusterRnaVln <- VlnPlot(seuForGraph,
-  features = toupper(customCd8Genes[customCd8Genes$modality == "RNA", "geneName"]),
-  group.by = "forGraph",
-  pt.size = 0.2,
-  combine = TRUE)
-
-subclusterRnaVln &
-    theme(legend.position = "blank",
-      axis.text = element_text(size = 5),
-      plot.title = element_text(size = 7),
-      axis.title = element_blank())
-
 
 ################################################################################
 # ??? - effector gene list heatmap
@@ -175,7 +117,7 @@ effectorGeneList <- read.csv("figures/fig5_gene_lists/CD8_genelist.csv")
 effectorGeneListRna <- effectorGeneList$gene[effectorGeneList$modality == "RNA"]
 
 seu_eff <- subset(seu,
-  subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tem/Temra", "CD8 Tem/Trm #1", "CD8 Tem/Trm #2"))
+  subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD8 Tcm/Tem/Temra", "CD8 Tem/Trm #1", "CD8 Tem/Trm #2"))
 
 # top 10 heatmap
 effAvgExp <- AverageExpression(
@@ -239,7 +181,7 @@ fig_effGeneList <- Heatmap(
 ################################################################################
 # ??? - cxcr3, tox, gzmk investigation
 ################################################################################
-seu_TemTemra <- subset(seu_eff, subset = manualAnnot == "CD8 Tem/Temra")
+seu_TemTemra <- subset(seu_eff, subset = manualAnnot == "CD8 Tcm/Tem/Temra")
 
 fig_vlnCTG <- data.frame(
   CXCR3 = seu_TemTemra@assays$RNA@data["CXCR3", ],
@@ -266,6 +208,7 @@ fig_vlnCTG <- data.frame(
     strip.text = element_text(size = 6, color = "#000000"),
     axis.text = element_text(size = 6, color = "#000000")
     )
+
 
 findMarkersCombinatorial(
   seu_TemTemra,
@@ -616,7 +559,7 @@ p <- wrap_elements(full = figA / figB &
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig5_final",
+  fn = "fig5_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,
