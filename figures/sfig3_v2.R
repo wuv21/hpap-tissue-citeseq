@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -8,6 +8,7 @@ library(dplyr)
 library(circlize)
 library(ComplexHeatmap)
 library(cluster)
+library(forcats)
 
 set.seed(42)
 
