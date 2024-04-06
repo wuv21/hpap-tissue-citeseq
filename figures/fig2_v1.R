@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 
 source("figures/genericFigureSettings.R")

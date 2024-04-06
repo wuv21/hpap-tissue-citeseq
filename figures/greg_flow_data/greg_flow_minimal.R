@@ -7,6 +7,7 @@ library(tidyr)
 library(forcats)
 library(ggplot2)
 library(rstatix)
+library(ggpubr)
 
 parentDir <- "figures/greg_flow_data"
 
@@ -14,7 +15,7 @@ parentDir <- "figures/greg_flow_data"
 # load in data
 ################################################################################
 df <- read.csv(
-  file = paste0(parentDir, "/Lineage_MasterV3_2023-11-08.csv"), 
+  file = paste0(parentDir, "/Lineage_MasterV3.csv"), 
   check.names = FALSE,
   stringsAsFactors = FALSE)
 
@@ -167,7 +168,7 @@ dfScientistFilter <- dfFresh %>%
   filter(metric %in% ScientistFilter)
 
 #generate df filtering out non-standard HPAP tissues
-dfLineageFilter <- anti_join(dfFresh, dfScientistFilter) %>%
+dfLineageFilter <- dplyr::anti_join(dfFresh, dfScientistFilter) %>%
   filter(Tissue != "PBMC") %>% #removed since PBMCs have artifacts in the neutrophil counts due to long term blood storage
   filter(Tissue != "Islet_Sup") %>% #removed since it is not a standard HPAP tissue
   filter(Tissue != "Whole_Blood") %>% #removed since it is not a standard HPAP tissue

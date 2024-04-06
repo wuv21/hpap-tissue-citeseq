@@ -1,4 +1,4 @@
-# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
