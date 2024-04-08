@@ -258,26 +258,6 @@ CD4Heatmap2 <- Heatmap(
   cluster_rows = diana,
   cluster_columns = diana)
 
-# LinHeatmap <- Heatmap(dfTotalLineageHeatmap,
-#   name = "Z-score",
-#   col = col_fun_LineageHM,
-#   show_column_names = FALSE,
-#   top_annotation = LinAnn,
-#   cluster_columns = diana,
-#   row_km = 3,
-#   row_title_gp = gpar(fontsize = 10),
-#   row_title_rot = 0,
-#   row_names_gp = gpar(fontsize = 4),
-#   row_dend_width = unit(0.1, "in"),
-#   column_dend_height = unit(0.2, "in"),
-#   heatmap_legend_param = list(
-#     legend_height = unit(0.3, "in"),
-#     direction = "horizontal",
-#     grid_width = unit(0.1, "in"),
-#     grid_height = unit(0.1, "in"),
-#     labels_gp = gpar(fontsize = 4),
-#     title_gp = gpar(fontsize = 6)
-#   ))
 
 ################################################################################
 # # Final layout and plot all
@@ -296,9 +276,9 @@ layout <- c(
 
 p <- wrap_elements(plot = LinPopsGraphs[[3]]) +
   wrap_elements(plot = LinPopsGraphs[[1]]) +
-  wrap_elements(plot = LinPopsGraphs[[4]]) +
-  wrap_elements(plot = LinPopsGraphs[[2]]) +
   wrap_elements(plot = LinPopsGraphs[[6]]) +
+  wrap_elements(plot = LinPopsGraphs[[2]]) +
+  wrap_elements(plot = LinPopsGraphs[[4]]) +
   wrap_elements(plot = LinPopsGraphs[[5]]) +
   wrap_elements(plot = TotalLinPCAplotln) +
   wrap_elements(plot = CD4PCAplot) +

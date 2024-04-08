@@ -1,9 +1,10 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
 source("scripts/deg.R")
+library(ggrastr)
 library(Seurat)
 library(cowplot)
 library(presto)
@@ -512,7 +513,7 @@ fig_vlnCTG_mesln <- data.frame(
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
   ggplot(aes(x = disease, y = data)) +
   geom_violin(aes(fill = disease)) +
-  geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0) +
+  rasterise(geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0), dpi = 3000) +
   geom_boxplot(fill = "#00000000", outlier.shape = NA, color = "#000000") +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "#ff0000") +
   facet_wrap(~ gene) +
@@ -553,7 +554,7 @@ fig_vlnCTG_spleen <- data.frame(
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
   ggplot(aes(x = disease, y = data)) +
   geom_violin(aes(fill = disease)) +
-  geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0) +
+  rasterise(geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0), dpi = 300) +
   geom_boxplot(fill = "#00000000", outlier.shape = NA, color = "#000000") +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "#ff0000") +
   facet_wrap(~ gene) +
@@ -592,7 +593,7 @@ fig_vlnGK_mesln <- data.frame(
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
   ggplot(aes(x = disease, y = data)) +
   geom_violin(aes(fill = disease)) +
-  geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0) +
+  rasterise(geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0), dpi = 300) +
   geom_boxplot(fill = "#00000000", outlier.shape = NA, color = "#000000") +
   facet_wrap(~ gene) +
   scale_fill_manual(values = COLORS$disease) +
@@ -623,7 +624,7 @@ fig_vlnGK_spleen <- data.frame(
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
   ggplot(aes(x = disease, y = data)) +
   geom_violin(aes(fill = disease)) +
-  geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0) +
+  rasterise(geom_jitter(color = "#00000020", size = 0.2, width = 0.3, height = 0), dpi = 300) +
   geom_boxplot(fill = "#00000000", outlier.shape = NA, color = "#000000") +
   facet_wrap(~ gene) +
   scale_fill_manual(values = COLORS$disease) +
