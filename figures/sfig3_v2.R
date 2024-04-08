@@ -102,7 +102,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig4_v2_final",
+  fn = "sfig3_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 11,

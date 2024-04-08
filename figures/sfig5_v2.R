@@ -113,7 +113,7 @@ figC <- dfDiseaseScales %>%
 # D - cd4 differences in Treg-like spleen
 ################################################################################
 figD <- dfDiseaseScales %>%
-  filter(LN_type == "mLN" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
+  filter(LN_type == "Spleen" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
   ggplot(aes(`Disease Status`, value, color = `Disease Status`)) +
   labs(
     y = "% of Mem CD4+ T cells",
@@ -703,7 +703,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig6_v2_final",
+  fn = "sfig5_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,

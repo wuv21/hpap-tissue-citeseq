@@ -165,7 +165,7 @@ p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3)) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig7_v2_final",
+  fn = "sfig6_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,

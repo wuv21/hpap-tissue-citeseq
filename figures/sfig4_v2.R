@@ -194,7 +194,7 @@ p <- wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 4)) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig5_v2_final",
+  fn = "sfig4_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,
