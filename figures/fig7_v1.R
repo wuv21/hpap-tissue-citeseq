@@ -129,8 +129,7 @@ HLAscoreDisease <- dfAllPopsFreqStatsGRSpln %>%
     position = position_jitterdodge(jitter.width = 1, 
       dodge.width = 0.8)) +
   scale_color_manual(values = COLORS$disease) +
-  labs(title = "HLA-GRS score",
-    y = "HLA-GRS score") +
+  labs(y = "HLA-GRS score") +
   theme_classic() +
   subplotTheme +
   theme(
@@ -222,7 +221,7 @@ hlaGRS_NDAAb <- dfGRShlaCorrStatsNDAAb %>%
       geom_point(size = 1.3, shape = 21, color = "#000000") +
       labs(x = "-log10(p adj)",
         fill = "Corr.Estimate (τ)") + 
-      ggtitle("HLA-GRS v Population\n Frequency: ND and AAb+") +
+      ggtitle("ND and AAb+") +
       guides(fill = guide_colorbar(
         title.position = "top",
         title.hjust = 1,
@@ -310,7 +309,7 @@ hlaGRS_AAbT1D <- dfGRShlaCorrStatsAAbT1D %>%
         barheight = 4)) +
       scale_fill_gradient2(midpoint = 0, low = "blue", mid = "white", high = "red") +
       scale_y_continuous(expand = c(0, 0), limits = c(0, 4.1)) +
-      ggtitle("HLA-GRS v Population Frequency: AAb+ and T1D") +
+      ggtitle("AAb+ and T1D") +
       facet_wrap(corrPosNeg ~ ., scales = "free") +
       theme_classic() +
       subplotTheme +
