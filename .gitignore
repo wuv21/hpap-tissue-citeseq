@@ -3,7 +3,6 @@
 .Rhistory
 .Rprofile
 .Rproj.user/
-metadata/
 rds/
 outs/
 renv/
