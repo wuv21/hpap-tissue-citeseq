@@ -186,7 +186,7 @@ seu_TemTemra <- subset(seu_eff, subset = manualAnnot == "CD8 Tcm/Tem/Temra")
 fig_vlnCTG <- data.frame(
   CXCR3 = seu_TemTemra@assays$RNA@data["CXCR3", ],
   TOX = seu_TemTemra@assays$RNA@data["TOX", ],
-  GZMK = seu_TemTemra@assays$RNA@data["GZMK", ],
+  # GZMK = seu_TemTemra@assays$RNA@data["GZMK", ],
   disease = seu_TemTemra$Disease_Status
 ) %>%
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
@@ -198,12 +198,13 @@ fig_vlnCTG <- data.frame(
   facet_wrap(~ gene) +
   scale_fill_manual(values = COLORS$disease) +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
-  labs(y = "Expression") +
+  labs(y = "Normalized expression") +
   theme_classic() +
   subplotTheme +
   theme(
     legend.position = "blank",
-    axis.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 6, color = "#000000"),
     strip.background = element_rect(color = NA, fill = NA),
     strip.text = element_text(size = 6, color = "#000000"),
     axis.text = element_text(size = 6, color = "#000000")
@@ -213,30 +214,30 @@ fig_vlnCTG <- data.frame(
 findMarkersCombinatorial(
   seu_TemTemra,
   combVar = "Disease_Status",
-  features = c("CXCR3", "TOX", "GZMK")
+  features = c("CXCR3", "TOX")
 ) %>%
   select(-p_val_adj)
 
 seu_TemTemra$CXCR3pos <- seu_TemTemra@assays$RNA@data["CXCR3", ] > 0.5
 seu_TemTemra$TOXpos <- seu_TemTemra@assays$RNA@data["TOX", ] > 0.5
-seu_TemTemra$GZMKpos <- seu_TemTemra@assays$RNA@data["GZMK", ] > 0.5
+# seu_TemTemra$GZMKpos <- seu_TemTemra@assays$RNA@data["GZMK", ] > 0.5
 
 sharedMarkers <- data.frame(
   cbc = Cells(seu_TemTemra),
   disease = seu_TemTemra$Disease_Status,
   donor = seu_TemTemra$DonorID,
   CXCR3 = seu_TemTemra$CXCR3pos,
-  TOX = seu_TemTemra$TOXpos,
-  GZMK = seu_TemTemra$GZMKpos
+  TOX = seu_TemTemra$TOXpos
+  # GZMK = seu_TemTemra$GZMKpos
 ) %>%
-  group_by(donor, disease, CXCR3, TOX, GZMK) %>%
+  group_by(donor, disease, CXCR3, TOX) %>%
   summarize(n = n()) %>%
   ungroup() %>%
   group_by(donor) %>%
   mutate(proportion = n / sum(n)) %>%
   mutate(rowID = factor(row_number())) %>%
   mutate(nudge = n + max(n) * 0.05) %>%
-  mutate(group = paste(CXCR3, TOX, GZMK, sep = "_"))
+  mutate(group = paste(CXCR3, TOX, sep = "_"))
 
 ggpubr::compare_means(data = sharedMarkers, formula = proportion ~ disease, group.by = "group", p.adjust.method = "BH") %>%
   select(group, group1, group2, p, p.adj, method) %>%
@@ -249,7 +250,7 @@ sharedMarkers_boxPlot <- sharedMarkers %>%
   scale_x_discrete(drop = FALSE) +
   scale_fill_manual(values = COLORS$disease) +
   coord_cartesian(clip = "off") +
-  labs(y = "Proportion of CD8 Tem/Temra") +
+  labs(y = "Proportion of CD8 Tcm/Tem/Temra") +
   theme_classic() +
   theme(
     legend.position = "blank",
@@ -261,7 +262,7 @@ sharedMarkers_boxPlot <- sharedMarkers %>%
 
 sharedMarkers_axisPlot <- sharedMarkers %>%
   dplyr::select(-n) %>%
-  pivot_longer(cols = c(CXCR3, TOX, GZMK), names_to = "modals", values_to = "presence") %>%
+  pivot_longer(cols = c(CXCR3, TOX), names_to = "modals", values_to = "presence") %>%
   mutate(lineGroup = ifelse(presence, rowID, paste(rowID, modals, NA))) %>%
   mutate(colorGroup = ifelse(presence, "#000000", "#CCCCCC")) %>%
   ggplot(aes(x = rowID, y = modals)) +
@@ -280,7 +281,7 @@ sharedMarkers_axisPlot <- sharedMarkers %>%
 
 sharedMarkers_finalPlot <- sharedMarkers_boxPlot / sharedMarkers_axisPlot + plot_layout(heights = c(6, 1))
 
-seu_TemTemra$phenotype <- paste(seu_TemTemra$CXCR3pos, seu_TemTemra$TOXpos, seu_TemTemra$GZMKpos, sep = "_")
+seu_TemTemra$phenotype <- paste(seu_TemTemra$CXCR3pos, seu_TemTemra$TOXpos, sep = "_")
 Idents(seu_TemTemra) <- "phenotype"
 uniqADTByPhenotype <- FindAllMarkers(
   seu_TemTemra,
@@ -288,14 +289,14 @@ uniqADTByPhenotype <- FindAllMarkers(
   assay = "adt"
 )
 
-cNegTPosGPos_uniqAdt <- uniqADTByPhenotype %>%
+cNegTPos_uniqAdt <- uniqADTByPhenotype %>%
   filter(p_val_adj < 0.05) %>%
-  filter(cluster == "FALSE_TRUE_TRUE") %>%
+  filter(cluster == "FALSE_TRUE") %>%
   left_join(tsaCatalog %>% select(DNA_ID, cleanName), by = c("gene" = "DNA_ID"))
 
-cPosTNegGNeg_uniqAdt <- uniqADTByPhenotype %>%
+cPosTNeg_uniqAdt <- uniqADTByPhenotype %>%
   filter(p_val_adj < 0.05) %>%
-  filter(cluster == "TRUE_FALSE_FALSE") %>%
+  filter(cluster == "TRUE_FALSE") %>%
   left_join(tsaCatalog %>% select(DNA_ID, cleanName), by = c("gene" = "DNA_ID"))
 
 # top 10 heatmap
@@ -325,35 +326,34 @@ combinationRenamer <- function(x, actualNames, sep = "_") {
   return(xNew)
 }
 
-seu$phenotypeCondensed2 <- combinationRenamer(seu$phenotypeCondensed2, c("CXCR3", "TOX", "GZMK"))
+seu$phenotypeCondensed2 <- combinationRenamer(seu$phenotypeCondensed2, c("CXCR3", "TOX"))
  
-cNegTPosGPos_avgExp <- AverageExpression(
+cNegTPos_avgExp <- AverageExpression(
   object = seu,
   assays = "adt",
   return.seurat = FALSE,
-  features = cNegTPosGPos_uniqAdt$gene,
+  features = cNegTPos_uniqAdt$gene,
   group.by = c("phenotypeCondensed2"),
   slot = "data")
 
 tsaCatalogDict <- tsaCatalog$cleanName
 names(tsaCatalogDict) <- tsaCatalog$DNA_ID
 
-cNegTPosGPos_adtMat <- t(scale(t(cNegTPosGPos_avgExp$adt)))
-rownames(cNegTPosGPos_adtMat) <- tsaCatalogDict[rownames(cNegTPosGPos_adtMat)]
+cNegTPos_adtMat <- t(scale(t(cNegTPos_avgExp$adt[order(cNegTPos_avgExp$adt[, "CXCR3- TOX+"] / cNegTPos_avgExp$adt[, "CXCR3+ TOX-"], decreasing = TRUE), ])))
+rownames(cNegTPos_adtMat) <- tsaCatalogDict[rownames(cNegTPos_adtMat)]
+cNegTPos_adtMat <- cNegTPos_adtMat[, c(5, 7, 4, 6, 3, 2, 9, 1)]
 
 grid_size <- unit(0.2, "cm")
 
-fig_cNegTPosGPos_adt <- Heatmap(
-  matrix = cNegTPosGPos_adtMat,
-  cluster_columns = TRUE,
-  cluster_rows = TRUE,
+fig_cNegTPos_adt <- Heatmap(
+  matrix = cNegTPos_adtMat,
+  cluster_columns = FALSE,
+  cluster_rows = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
   row_names_gp = gpar(fontsize = 6),
   column_names_gp = gpar(fontsize = 6),
   column_names_rot = 90,
-  row_dend_width = unit(5, "points"),
-  column_dend_height = unit(5, "points"),
   name = "Avg Expression",
   heatmap_legend_param = list(
     direction = "horizontal",
@@ -367,28 +367,29 @@ fig_cNegTPosGPos_adt <- Heatmap(
   column_title_gp = gpar(fontsize = 6)
 )
 
-cPosTNegGNeg_avgExp <- AverageExpression(
+cPosTNeg_avgExp <- AverageExpression(
   object = seu,
   assays = "adt",
   return.seurat = FALSE,
-  features = cPosTNegGNeg_uniqAdt$gene,
+  features = cPosTNeg_uniqAdt$gene,
   group.by = c("phenotypeCondensed2"),
   slot = "data")
 
-cPosTNegGNeg_adtMat <- t(scale(t(cPosTNegGNeg_avgExp$adt)))
-rownames(cPosTNegGNeg_adtMat) <- tsaCatalogDict[rownames(cPosTNegGNeg_adtMat)]
+cPosTNeg_adtMat <- t(scale(t(cPosTNeg_avgExp$adt[order(cPosTNeg_avgExp$adt[, "CXCR3- TOX+"] / cPosTNeg_avgExp$adt[, "CXCR3+ TOX-"], decreasing = FALSE), ])))
+rownames(cPosTNeg_adtMat) <- tsaCatalogDict[rownames(cPosTNeg_adtMat)]
+cPosTNeg_adtMat <- cPosTNeg_adtMat[, c(6, 7, 5, 4, 3, 2, 9, 1)]
 
-fig_cPosTNegGNeg_adt <- Heatmap(
-  matrix = cPosTNegGNeg_adtMat,
-  cluster_columns = TRUE,
-  cluster_rows = TRUE,
+fig_cPosTNeg_adt <- Heatmap(
+  matrix = cPosTNeg_adtMat,
+  cluster_columns = FALSE,
+  cluster_rows = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
   row_names_gp = gpar(fontsize = 6),
   column_names_gp = gpar(fontsize = 6),
   column_names_rot = 90,
-  row_dend_width = unit(5, "points"),
-  column_dend_height = unit(5, "points"),
+  # row_dend_width = unit(5, "points"),
+  # column_dend_height = unit(5, "points"),
   name = "Avg Expression",
   heatmap_legend_param = list(
     direction = "horizontal",
@@ -401,9 +402,6 @@ fig_cPosTNegGNeg_adt <- Heatmap(
   row_title_gp = gpar(fontsize = 6),
   column_title_gp = gpar(fontsize = 6)
 )
-
-# ggpubr::compare_means(data = sharedMarkers, proportion ~ disease, group.by = c("group"), p.adjust.method = "BH")
-
 
 uniqRNAByPhenotype <- FindAllMarkers(
   seu_TemTemra,
@@ -411,39 +409,39 @@ uniqRNAByPhenotype <- FindAllMarkers(
   assay = "RNA"
 )
 
-cNegTPosGPos_uniqRNA <- uniqRNAByPhenotype %>%
-  filter(p_val_adj < 0.05) %>%
-  filter(cluster == "FALSE_TRUE_TRUE")
+cNegTPos_uniqRNA <- uniqRNAByPhenotype %>%
+  filter(p_val_adj < 0.0001) %>%
+  filter(cluster == "FALSE_TRUE")
 
-cPosTNegGNeg_uniqRNA <- uniqRNAByPhenotype %>%
-  filter(p_val_adj < 0.05) %>%
-  filter(cluster == "TRUE_FALSE_FALSE")
+cPosTNeg_uniqRNA <- uniqRNAByPhenotype %>%
+  filter(p_val_adj < 0.0001) %>%
+  filter(cluster == "TRUE_FALSE")
 
 
 ###
-seu_TemTemra$phenotype2 <- combinationRenamer(seu_TemTemra$phenotype, actualNames = c("CXCR3", "TOX", "GZMK"))
+seu_TemTemra$phenotype2 <- combinationRenamer(seu_TemTemra$phenotype, actualNames = c("CXCR3", "TOX"))
 
-cNegTPosGPos_avgExpRNA <- AverageExpression(
+cNegTPos_avgExpRNA <- AverageExpression(
   object = seu_TemTemra,
   assays = "RNA",
   return.seurat = FALSE,
-  features = cNegTPosGPos_uniqRNA$gene,
+  features = cNegTPos_uniqRNA$gene,
   group.by = c("phenotype2"),
   slot = "data")
 
-cNegTPosGPos_rnaMat <- scale(t(cNegTPosGPos_avgExpRNA$RNA))
+cNegTPos_rnaMat <- scale(t(cNegTPos_avgExpRNA$RNA[order(cNegTPos_avgExpRNA$RNA[, 2] / cNegTPos_avgExpRNA$RNA[, 3], decreasing = TRUE),]))
 
-fig_cNegTPosGPos_rna <- Heatmap(
-  matrix = cNegTPosGPos_rnaMat,
-  cluster_columns = TRUE,
+fig_cNegTPos_rna <- Heatmap(
+  matrix = cNegTPos_rnaMat,
+  cluster_columns = FALSE,
   cluster_rows = TRUE,
   show_row_names = TRUE,
   show_column_names = TRUE,
   row_names_gp = gpar(fontsize = 6),
-  column_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 4),
   column_names_rot = 90,
   row_dend_width = unit(5, "points"),
-  column_dend_height = unit(5, "points"),
+  # column_dend_height = unit(5, "points"),
   name = "Avg Expression",
   heatmap_legend_param = list(
     direction = "horizontal",
@@ -459,27 +457,27 @@ fig_cNegTPosGPos_rna <- Heatmap(
 
 
 ###
-cPosTNegGNeg_avgExpRNA <- AverageExpression(
+cPosTNeg_avgExpRNA <- AverageExpression(
   object = seu_TemTemra,
   assays = "RNA",
   return.seurat = FALSE,
-  features = cPosTNegGNeg_uniqRNA$gene,
+  features = cPosTNeg_uniqRNA$gene,
   group.by = c("phenotype2"),
   slot = "data")
 
-cPosTNegGNeg_rnaMat <- scale(t(cPosTNegGNeg_avgExpRNA$RNA))
+cPosTNeg_rnaMat <- scale(t(cPosTNeg_avgExpRNA$RNA[order(cPosTNeg_avgExpRNA$RNA[, 2] / cPosTNeg_avgExpRNA$RNA[, 3], decreasing = FALSE),]))
 
-fig_cPosTNegGNeg_rna <- Heatmap(
-  matrix = cPosTNegGNeg_rnaMat,
-  cluster_columns = TRUE,
+fig_cPosTNeg_rna <- Heatmap(
+  matrix = cPosTNeg_rnaMat,
+  cluster_columns = FALSE,
   cluster_rows = TRUE,
   show_row_names = TRUE,
   show_column_names = TRUE,
   row_names_gp = gpar(fontsize = 6),
-  column_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 4),
   column_names_rot = 90,
   row_dend_width = unit(5, "points"),
-  column_dend_height = unit(5, "points"),
+  # column_dend_height = unit(5, "points"),
   name = "Avg Expression",
   heatmap_legend_param = list(
     direction = "horizontal",
@@ -505,8 +503,8 @@ layout <- c(
   patchwork::area(1, 7, 4, 12), # g shared marker
   patchwork::area(5, 7, 8, 9), # heatmap of adt differences between CXCR3- tox+ gzmk+ and all other cells
   patchwork::area(5, 10, 8, 12), # heatmap of adt differences between CXCR3+ tox- gzmk- and all other cells
-  patchwork::area(9, 1, 12, 6), # j heatmap of cxcr3- tox+ gzmk+ markers
-  patchwork::area(9, 7, 12, 12) # k heatmap of cxcr3- tox+ gzmk+ markers
+  patchwork::area(9, 1, 10, 6), # j heatmap of cxcr3- tox+ gzmk+ markers
+  patchwork::area(9, 7, 10, 12) # k heatmap of cxcr3- tox+ gzmk+ markers
 )
 
 p <- wrap_elements(full = figA / figB &
@@ -524,28 +522,28 @@ p <- wrap_elements(full = figA / figB &
   wrap_elements(plot = fig_vlnCTG) +
   wrap_elements(plot = sharedMarkers_finalPlot) +
   wrap_elements(full = grid.grabExpr(
-    draw(fig_cNegTPosGPos_adt,
+    draw(fig_cNegTPos_adt,
       heatmap_legend_side = "bottom",
       align_heatmap_legend = "global_center",
       background = "transparent",
       padding = unit(c(0.5,1.5,1,0.5), "lines"))
   ), clip = FALSE) +
   wrap_elements(full = grid.grabExpr(
-    draw(fig_cPosTNegGNeg_adt,
+    draw(fig_cPosTNeg_adt,
       heatmap_legend_side = "bottom",
       align_heatmap_legend = "global_center",
       background = "transparent",
       padding = unit(c(0.5,1.5,1,0.5), "lines"))
   ), clip = FALSE) +
   wrap_elements(full = grid.grabExpr(
-    draw(fig_cNegTPosGPos_rna,
+    draw(fig_cNegTPos_rna,
       heatmap_legend_side = "bottom",
       align_heatmap_legend = "global_center",
       background = "transparent",
       padding = unit(c(0.5,1.5,1,0.5), "lines"))
   ), clip = FALSE) +
   wrap_elements(full = grid.grabExpr(
-    draw(fig_cPosTNegGNeg_rna,
+    draw(fig_cPosTNeg_rna,
       heatmap_legend_side = "bottom",
       align_heatmap_legend = "global_center",
       background = "transparent",
@@ -562,5 +560,5 @@ saveFinalFigure(
   fn = "fig5_v2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
-  gwidth = 8,
-  gheight = 9)
+  gwidth = 8.5,
+  gheight = 8.5)

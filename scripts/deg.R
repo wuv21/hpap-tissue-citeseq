@@ -33,7 +33,7 @@ findMarkersCombinatorial <- function(
     deg <- deg %>%
       mutate(
         gene = rownames(.),
-        upregulated = ifelse(avg_log2FC > 0, group1, group2),
+        upregulated = as.character(ifelse(avg_log2FC > 0, group1, group2)),
         matchup = comp
       )
     

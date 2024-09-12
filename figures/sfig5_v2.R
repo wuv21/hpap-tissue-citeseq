@@ -507,7 +507,7 @@ seu_mesln_TemTemra <- subset(seu, subset = manualAnnot == "CD8 Tem/Temra" & Tiss
 fig_vlnCTG_mesln <- data.frame(
   CXCR3 = seu_mesln_TemTemra@assays$RNA@data["CXCR3", ],
   TOX = seu_mesln_TemTemra@assays$RNA@data["TOX", ],
-  GZMK = seu_mesln_TemTemra@assays$RNA@data["GZMK", ],
+  # GZMK = seu_mesln_TemTemra@assays$RNA@data["GZMK", ],
   disease = seu_mesln_TemTemra$Disease_Status
 ) %>%
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
@@ -536,7 +536,7 @@ fig_vlnCTG_mesln <- data.frame(
 findMarkersCombinatorial(
   seu_mesln_TemTemra,
   combVar = "Disease_Status",
-  features = c("CXCR3", "TOX", "GZMK")
+  features = c("CXCR3", "TOX")
 ) %>%
   select(-p_val_adj)
 
@@ -548,7 +548,7 @@ seu_spleen_TemTemra <- subset(seu, subset = manualAnnot == "CD8 Tem/Temra" & Tis
 fig_vlnCTG_spleen <- data.frame(
   CXCR3 = seu_spleen_TemTemra@assays$RNA@data["CXCR3", ],
   TOX = seu_spleen_TemTemra@assays$RNA@data["TOX", ],
-  GZMK = seu_spleen_TemTemra@assays$RNA@data["GZMK", ],
+  # GZMK = seu_spleen_TemTemra@assays$RNA@data["GZMK", ],
   disease = seu_spleen_TemTemra$Disease_Status
 ) %>%
   pivot_longer(cols = -any_of(c("disease")), names_to = "gene", values_to = "data") %>%
@@ -575,9 +575,9 @@ fig_vlnCTG_spleen <- data.frame(
   )
 
 findMarkersCombinatorial(
-  seu_mesln_TemTemra,
+  seu_spleen_TemTemra,
   combVar = "Disease_Status",
-  features = c("CXCR3", "TOX", "GZMK")
+  features = c("CXCR3", "TOX")
 ) %>%
   select(-p_val_adj)
 

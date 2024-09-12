@@ -205,7 +205,8 @@ dfsigPopsDisease <- dfDiseasePoolStats %>%
     .fns = list(pval = ~ pValSymnum(.)),
     .names = "{fn}{col}")) %>%
   filter_at(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")), all_vars(!is.na(.))) %>%
-  filter(!if_all(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")), function(x) x > 0.05))
+  filter(!if_all(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")), function(x) x > 0.05)) %>%
+  filter(if_any(starts_with("pval"), ~ . == "**" | . == "***")) # requested by @Greg to filter only top sig rows
   
 dfsigPopsSamples <- dfsigPopsDisease %>%
   dplyr::select(immune_pop, tissue) %>%
@@ -340,33 +341,6 @@ manualClusterOrder <- factor(manualClusterOrder,
   levels = sortedClust,
   labels = sortedClust)
 
-################################################################################
-# dendrogram
-################################################################################
-# network <- GetNetworkData(seuWcgna, seuWcgna@misc$active_wgcna)
-# modules <- GetModules(seuWcgna, seuWcgna@misc$active_wgcna)
-
-# gg_dend <- dendextend::as.ggdend(as.dendrogram(network$dendrograms[[1]]))
-# ggplot(gg_dend, labels = F) + coord_flip() + scale_y_reverse()
-# 
-
-
-# figDend <- WGCNA::plotDendroAndColors(
-#   network$dendrograms[[1]],
-#   as.character(modules$color),
-#   groupLabels = "Module colors",
-#   dendroLabels = FALSE,
-#   hang = 0.03,
-#   addGuide = TRUE,
-#   guideHang = 0.05,
-#   main = ""
-# )
-# gridGraphics::grid.echo()
-# figB <- gridGraphics::grid.grab
-
-# PlotDendrogram(seuWcgna, main='ND/T1D pLN hdWGCNA Dendrogram')
-
-
 
 ################################################################################
 # modules of interest
@@ -397,7 +371,7 @@ hub_df <- do.call(rbind, lapply(mods, function(cur_mod){
 }))
 
 
-mods_of_interest <- c(6,7,8,15)
+mods_of_interest <- c(6,7,15)
 mods_of_interest <- paste0("T1D-M", mods_of_interest)
 
 plot_list_kmes <- lapply(mods_of_interest, function(x) {
@@ -408,7 +382,7 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
     arrange(desc(kME))
   
   p <- cur_df %>% ggplot(aes(x = reorder(gene_name, kME), y = kME)) +
-    geom_point(size = 1, color = cur_color, fill = cur_color) +
+    geom_point(size = 0.4, color = cur_color, fill = cur_color) +
     ggtitle(x) +
     coord_cartesian(clip = "off", expand = FALSE) +
     scale_y_continuous(limits = c(0.1, NA), expand = expansion(0, 0.05)) +
@@ -436,8 +410,9 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
       axis.text.y = element_text(size = 6, color = "#000000"),
       panel.grid = element_blank(),
       panel.background = element_blank(),
-      plot.title = element_text(size = 8, hjust = 0.5),
+      plot.title = element_text(size = 6, hjust = 0.5),
       plot.title.position = "panel",
+      plot.margin = margin(b = 10),
       axis.line = element_line(size = 0.5, colour = "#000000")
     )
 
@@ -469,8 +444,8 @@ tmp <- Heatmap(
   row_title_rot = 0,
   row_title_gp = gpar(fontsize = 8),
   row_names_gp = gpar(fontsize = 6),
-  column_names_rot = 0,
-  column_names_centered = TRUE,
+  column_names_rot = 45,
+  column_names_centered = FALSE,
   column_names_gp = gpar(fontsize = 6, fontface = "plain"),
   row_gap = unit(5, "pt"),
   cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
@@ -499,10 +474,9 @@ tmp <- Heatmap(
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 10, 4), # a
-  patchwork::area(1, 5, 2, 12), # b dendrogram
-  patchwork::area(3, 5, 10, 12) # d correlation
+  patchwork::area(1, 5, 9, 6), # b dendrogram
+  patchwork::area(1, 7, 10, 11) # d correlation
 )
-
 
 p <- wrap_elements(full = grid.grabExpr(
   draw(figA,
@@ -513,7 +487,7 @@ p <- wrap_elements(full = grid.grabExpr(
     padding = unit(c(0, 0.75, 0.5, 0.5), "lines"),
     merge_legend = TRUE)
 ), clip = FALSE) +
-  wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 1)) +
+  wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 3)) +
   wrap_elements(full = grid.grabExpr(
     draw(tmp,
       heatmap_legend_side = "bottom",
@@ -531,6 +505,6 @@ saveFinalFigure(
   fn = "fig2_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
-  gwidth = 8.5,
-  gheight = 6.75)
+  gwidth = 7.5,
+  gheight = 5)
 

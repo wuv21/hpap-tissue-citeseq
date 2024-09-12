@@ -273,15 +273,15 @@ fig_naiveCD8Freq <- naiveCD8Freq %>%
 
 ################################################################################
 # Fig F:
-# Make violin plots of TXK, IKZF1, FKBP5, ATM, GYPC, SELL for the 4 
+# Make violin plots of TXK, FKBP5, ATM for the 4 
 # naive clusters (CD4 Naive #1, CD4 Naive #2, CD8 Naive #1, CD4 Naive #2)
 ################################################################################
-naiveGenesOfInterest <- c("TXK", "IKZF1", "FKBP5", "ATM", "GYPC", "SELL")
+naiveGenesOfInterest <- c("TXK", "FKBP5", "ATM")
 fig_naiveGenesOfInterest <- Reduce('+', VlnPlot(
   seu_naiveT_pln,
   features = naiveGenesOfInterest,
   group.by = "manualAnnot",
-  split.by = "Disease_Status", pt.size = 0, combine = FALSE)) + plot_layout(nrow = 2) &
+  split.by = "Disease_Status", pt.size = 0, combine = FALSE)) + plot_layout(nrow = 1) &
   scale_fill_manual(values = COLORS[["disease"]]) &
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) &
   geom_boxplot(outlier.shape = NA, size = 0.2, alpha = 0, width = 0.9) &
@@ -451,7 +451,7 @@ p <- wrap_elements(plot = figA) +
   ), clip = FALSE) +
   wrap_elements(plot = fig_naiveCD4Freq) +
   wrap_elements(plot = fig_naiveCD8Freq) +
-  wrap_elements(full = fig_naiveGenesOfInterest) +
+  wrap_elements(full = fig_naiveGenesOfInterest & theme(plot.margin = margin(t = 8, b = 5, l = 5,))) +
   wrap_elements(plot = fig_cd4Degs) +
   wrap_elements(plot = fig_cd8Degs) +
   plot_annotation(tag_levels = list(LETTERS[1:8])) +
