@@ -112,7 +112,10 @@ names(compsout_rna)
 unique(so_pln_only[["manualAnnot"]][,1])
 
 saveRDS(compsout_rna, "rds/wuv_compres_bcellsep_rna_genelist_V3.rds")
-# %%
+
+#################################################################################
+# %% Some figure variables
+#################################################################################
 
 HMLABSIZE=3
 HMEXPWID=0.5
@@ -439,7 +442,7 @@ wrap_elements(full=wrap_elements(full=wrap_plots(list(figCi,figCii,figCiii))) +
 saveFinalFigure(plot=plot,
                 prefixDir = "/srv/http/betts/hpap/final_figures/",
                 fn = "figSY_v1",
-                devices = c("pdf"),
+                devices = c("pdf_base"),
                 addTimestamp = FALSE,
                 gheight=5.50,
                 gwidth=3.75)
