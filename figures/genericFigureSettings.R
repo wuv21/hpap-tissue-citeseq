@@ -134,7 +134,7 @@ saveFinalFigure <- function(
   plot,
   prefixDir = "../outs",
   fn,
-  devices = c("png", "pdf"),
+  devices = c("png", "pdf", "pdf_base"),
   addTimestamp = FALSE,
   gheight,
   gwidth) {
@@ -148,10 +148,18 @@ saveFinalFigure <- function(
     
     if (addTimestamp) {
       currentTime <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
-      gfn <- glue("{prefixDir}/{d}/{fn}_{currentTime}.{d}")
+      if (d == "pdf_base") { 
+        gfn <- glue("{prefixDir}/{d}/{fn}_{currentTime}.pdf")
+      } else {
+        gfn <- glue("{prefixDir}/{d}/{fn}_{currentTime}.{d}")
+      }
       
     } else {
-      gfn <- glue("{prefixDir}/{d}/{fn}.{d}")
+      if (d == "pdf_base") { 
+        gfn <- glue("{prefixDir}/{d}/{fn}.pdf")
+      } else {
+        gfn <- glue("{prefixDir}/{d}/{fn}.{d}")
+      }
     }
     
     
@@ -159,6 +167,8 @@ saveFinalFigure <- function(
       saveRDS(plot, gfn)
     } else if (d == "pdf") {
       ggsave(gfn, plot = plot, dpi = "retina", device = cairo_pdf, width = gwidth, height = gheight, units = "in")
+    } else if (d == "pdf_base") {
+      ggsave(gfn, plot = plot, dpi = "retina", device = "pdf", width = gwidth, height = gheight, units = "in")
     } else {
       ggsave(gfn, plot = plot, dpi = "retina", device = d, width = gwidth, height = gheight, units = "in")  
     }
