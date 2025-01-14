@@ -19,6 +19,7 @@ library(grid)
 
 FLOW_RDS_PATH="./figures/greg_flow_data/rds/dfLineageFilter.rds"
 SC_RDS_PATH="/home/ubuntu/projmnt/betts/hpap/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
+set.seed(42)
 
 #################################################################################
 # %% A - B cell differences in NK cells
@@ -102,11 +103,12 @@ sig_genes = compsout_nk_rna[compsout_nk_rna$gene %in% goirb & compsout_nk_rna$ma
 sig_genes$gene = factor(sig_genes$gene, levels=sig_genes$gene[order(sig_genes$avg_log2FC, decreasing=FALSE)])
 sig_genes$pvalsymm = pValSymnum(sig_genes$p_val_adj_all)
 
+# %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   geom_bar(stat="identity", color = "black", lwd=0.15) +
   scale_fill_manual(values = COLORS[["pval-heatmap"]]) +
-  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.8, hjust=0, fontface="bold")+
-  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.8, hjust=1, fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.8, hjust=0, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.8, hjust=1, family="sans", fontface="bold")+
   scale_color_manual(values=c("ns" = "black", "*" = "black", "**" = "black", "***" = "white")) +
   geom_hline(yintercept = 0, color = "black") +
   guides(color="none") +
@@ -128,7 +130,7 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
         panel.spacing = unit(0, "pt"),
         panel.grid = element_blank(),
         axis.text.x = element_text(size=4, color="black"),
-        axis.title.x = element_text(size=5, color="black",vjust=3),
+        axis.title.x = element_text(family="sans", size=5, color="black",vjust=2),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank(),
@@ -328,7 +330,7 @@ saveFinalFigure(plot=plot,
                 # prefixDir = "figures/outs",
                 prefixDir = "/srv/http/betts/hpap/final_figures",
                 fn = "fig6_v2",
-                devices = c("pdf"),
+                devices = c("pdf_base"),
                 addTimestamp = FALSE,
                 gheight=5.50,
                 gwidth=3.75)
