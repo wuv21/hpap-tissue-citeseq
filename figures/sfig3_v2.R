@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -21,7 +21,7 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
     
     return(tmp)
   })
@@ -102,7 +102,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig3_v2_final",
+  fn = "sfig3_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 11,

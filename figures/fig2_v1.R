@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 
 source("figures/genericFigureSettings.R")
@@ -314,7 +314,7 @@ figA <- Heatmap(
 # load seurat object for downstream...
 ################################################################################
 
-wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v2.rds"
+wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
 seuWcgna <- tryCatch(
   {
     print(head(seuWcgna$TissueCondensed))
@@ -371,7 +371,7 @@ hub_df <- do.call(rbind, lapply(mods, function(cur_mod){
 }))
 
 
-mods_of_interest <- c(6,7,15)
+mods_of_interest <- c(5,6,14)
 mods_of_interest <- paste0("T1D-M", mods_of_interest)
 
 plot_list_kmes <- lapply(mods_of_interest, function(x) {
@@ -502,7 +502,7 @@ p <- wrap_elements(full = grid.grabExpr(
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig2_final",
+  fn = "fig2_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 7.5,

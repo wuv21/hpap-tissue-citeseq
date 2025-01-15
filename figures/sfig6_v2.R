@@ -25,7 +25,7 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
     
     return(tmp)
   })
@@ -165,7 +165,7 @@ p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3)) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig6_v2_final",
+  fn = "sfig6_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,

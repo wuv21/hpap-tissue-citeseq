@@ -1,0 +1,6 @@
+Filename,CellPop,Disease_Status
+HPAP099_Spleen_B cells.fcs,B cells,ND
+HPAP099_Spleen_CD4+.fcs,CD4 T cells,ND
+HPAP099_Spleen_CD8+.fcs,CD8 T cells,ND
+HPAP099_Spleen_MonoDC.fcs,Mono-DC,ND
+HPAP099_Spleen_NK cells.fcs,NK cells,ND

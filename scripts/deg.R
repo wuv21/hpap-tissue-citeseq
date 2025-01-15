@@ -201,7 +201,7 @@ plotCombinatorialDEGLollipop <- function(combMarkersRes, title) {
   df <- combMarkersRes %>%
     group_by(matchup, upregulated) %>%
     # mutate(piscore = -1 * log10(p_val_adj_all) * avg_log2FC) %>%
-    filter(p_val_adj_all < 0.05) %>%
+    dplyr::filter(p_val_adj_all < 0.05) %>%
     slice_max(abs(avg_log2FC), n = 20) %>%
     group_by(matchup) %>%
     arrange(desc(avg_log2FC), .by_group = TRUE)

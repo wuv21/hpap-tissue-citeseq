@@ -3,7 +3,7 @@
 ################################################################################
 
 # uncomment if running in RProject
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 silentLoadLibrary <- function(x) {
   suppressWarnings(suppressMessages(library(x, character.only = TRUE)))
@@ -28,8 +28,6 @@ libraries <- c(
   "hdWGCNA"
 )
 
-# reticulate::use_condaenv("hpap-cite")
-
 invisible(lapply(libraries, silentLoadLibrary))
 
 # general scripts
@@ -48,8 +46,8 @@ set.seed(42)
 # preliminary setup and loading of meta/data files
 ################################################################################
 rnaOut <- "../hpap-citeseq-data/rna"
-adtOut <- "../hpap-citeseq-data/adt"
-htoOut <- "../hpap-citeseq-data/hto"
+adtOut <- "../hpap-citeseq-data/adt_v2"
+htoOut <- "../hpap-citeseq-data/hto_v2"
 
 # load tsa catalog
 tsaCatalog <- readRDS("rds/tsa_catalog.rds")
@@ -105,17 +103,19 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
     
     seuList[[i]] <- subset(seuList[[i]], subset = hto_classification.global == "Singlet")
     
-    # export matrix
-    matrixFn <- paste0("matrixForDoubletScoring/", xName, ".mtx")
-    Matrix::writeMM(seuList[[i]]@assays$RNA@counts, file = matrixFn)
-    
-    # call doublets using scrublet
-    message("running scrublet")
-    scrubletOutDir <- "scrubletScores"
-    
     # REMEMBER that this script needs to be run while in the hpap-cite conda env.
+    # reticulate::use_condaenv("hpap-cite")
+
+    scrubletOutDir <- "scrubletScores"
     scrubletScoreFn <- paste0(scrubletOutDir, "/", xName, "_doubletScores.txt")
     if (!file.exists(scrubletScoreFn)) {
+      # export matrix
+      matrixFn <- paste0("matrixForDoubletScoring/", xName, ".mtx")
+      Matrix::writeMM(seuList[[i]]@assays$RNA@counts, file = matrixFn)
+      
+      # call doublets using scrublet
+      message("running scrublet")
+      
       system(
         glue("python scripts/doubletScorer.py --mm {matrixFn} --sampleName {xName} --outDir {scrubletOutDir}"),
         wait = TRUE
@@ -174,6 +174,7 @@ if (file.exists(seuMergedFn) & file.exists(harmonizedFn)) {
   rm(seuList)
   gc()
 }
+
 
 ################################################################################
 # harmony batch effect correction against run number and donor ID.
@@ -314,7 +315,7 @@ seuMerged <- AddMetaData(
 rm(tissueCondensed)
 
 # add heatshock protein score
-heatshockGenes <- read.csv("hsp_genes.tsv", sep = "\t")
+heatshockGenes <- read.csv("miscellaneous_gene_lists/hsp_genes.tsv", sep = "\t")
 seuMerged <- AddModuleScore(
   object = seuMerged,
   features = list(heatshockGenes$Approved.symbol),
@@ -336,6 +337,22 @@ seuDf %>%
 
 rm(seuDf)
 save.image("rds/preManualAnnotSubset.rData")
+
+# check
+oldAnnots <- read.csv("../hpap-citeseq-analysis/v1_assignments.csv")
+
+data.frame(
+  cbc = names(seuMerged$RNA_snn_res.1),
+  unannotCluster = seuMerged$RNA_snn_res.1
+) %>%
+  left_join(oldAnnots) %>%
+  group_by(unannotCluster, manualAnnot) %>%
+  tally(name = "nCells") %>%
+  group_by(unannotCluster) %>%
+  mutate(propOfUnAnnot = nCells / sum(nCells) * 100) %>%
+  slice_max(propOfUnAnnot, n = 3) %>%
+  write.csv("temp1.csv", row.names = FALSE)
+
 
 baseMarkers <- c(
   "A0034", #CD3
@@ -406,87 +423,13 @@ basePanelRNA <- c(
 )
 
 # base rna dot style
-p <- DotPlot(seuMerged, features = basePanelRNA, group.by = "RNA_snn_res.1") +
-  scale_y_discrete(limits = levels(clusterOrder)) +
+seuMerged$tmp <- paste0(seuMerged$RNA_snn_res.1, "_", seuMerged$manualAnnot)
+p <- DotPlot(seuMerged, features = basePanelRNA, group.by = "tmp") +
+  # scale_y_discrete(limits = levels(clusterOrder)) +
   textSizeOnlyTheme +
   theme(
     panel.grid.major.y = element_line(color = "#eeeeee"),
     axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE, hjust = 1))
-
-# # cluster DE for adt and rna
-# # get differential expression of various ADT markers
-# getClusterDifferences(
-#   seu = seuMerged,
-#   clusterName = "RNA_snn_res.1",
-#   tsvFn = "outs/tsv/DE_ADT_cluster.tsv",
-#   assay = "adt",
-#   tsa_catalog = tsaCatalog,
-#   findMarkerMethod = "wilcox",
-#   only.pos = TRUE,
-#   densify = TRUE,
-#   max.cells.per.ident = 100000,
-#   random.seed = 42)
-# 
-# options(future.globals.maxSize = 10000 * 1024^2)
-# plan("multisession", workers = 8)
-# # get differential expression of various RNA markers
-# getClusterDifferences(
-#   seu = seuMerged,
-#   clusterName = "RNA_snn_res.1",
-#   assay = "RNA",
-#   tsvFn = "outs/tsv/DE_RNA_cluster.tsv",
-#   parallelize = TRUE,
-#   findMarkerMethod = "wilcox",
-#   only.pos = TRUE,
-#   densify = TRUE,
-#   max.cells.per.ident = 100000,
-#   random.seed = 42)
-# 
-
-
-################################################################################
-# export for panc db processing
-################################################################################
-# FetchData(object = seuMerged,
-#   vars = c("DonorID", "Tissue", "runN", "well", "hash.ID")) %>%
-#   mutate(barcode = stringr::str_match(rownames(.), "[ATGC]+$")[, 1]) %>%
-#   dplyr::rename(
-#     donorID = DonorID,
-#     tissue = Tissue,
-#     hashID = hash.ID,
-#     projectWellID = well
-#   ) %>%
-#   write.table(x = ., file = "outs/csv/panc-db_barcodes.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-# 
-# sampleMeta %>%
-#   select(DonorID, Tissue, Run, HTO_DNA_ID) %>%
-#   dplyr::rename(
-#     donorID = DonorID,
-#     tissue = Tissue,
-#     runN = Run,
-#     hashID = HTO_DNA_ID,
-#   ) %>%
-#   write.table(x = ., file = "outs/csv/panc-db_sampleMeta.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
-# 
-# unhashedSampleMeta %>%
-#   mutate(runID = stringr::str_match(id, "(\\d{8}_hpap_\\d)_(.*)")[, 2:3]) %>%
-#   mutate(project = runID[, 1]) %>%
-#   mutate(well = runID[, 2]) %>%
-#   select(-runID) %>%
-#   dplyr::rename(
-#     projectWellID = id,
-#     runN = run
-#   ) %>%
-#   left_join(sampleMeta %>% select(Run, rna_fastq_dir, adthto_fastq_dir) %>% distinct(), by = c("runN" = "Run")) %>%
-#   mutate(rna_fastq_dir = gsub(
-#     "/project/bettslab/citeseq_raw/",
-#     "/project/betts_shescott_lab/hpap_atlas_citeseq/rna_fastq",
-#     rna_fastq_dir)) %>%
-#   mutate(adthto_fastq_dir = gsub(
-#     "/project/bettslab/citeseq_raw/",
-#     "/project/betts_shescott_lab/hpap_atlas_citeseq/adthto_fastq/",
-#     adthto_fastq_dir)) %>%
-#   write.table(x = ., file = "outs/csv/panc-db_runs.csv", sep = ",", col.names = TRUE, row.names = FALSE, quote = FALSE)
 
 
 ################################################################################
@@ -507,6 +450,7 @@ seuMerged <- AddMetaData(
 )
 seuMerged <- subset(seuMerged, subset = manualAnnot != "")
 rm(manualAnnot)
+gc()
 
 phenotypeCondensed <- case_when(
   grepl("^CD4", seuMerged$manualAnnot) ~ "CD4 T cell",
@@ -523,6 +467,7 @@ seuMerged <- AddMetaData(
 )
 
 rm(phenotypeCondensed)
+gc()
 save.image("rds/postManualAnnotSubset.rData")
 
 ### START HERE WHEN LOADING PREVIOUS RDATA
@@ -531,40 +476,6 @@ load("rds/postManualAnnotSubset.rData")
 ################################################################################
 # post annotation graphs
 ################################################################################
-# HSP signature graphs
-# seuDf <- FetchData(object = seuMerged,
-#   vars = c("TissueCondensed", "heatShockProgram1", "Disease_Status", "manualAnnot", "RNA_snn_res.1", "DonorID")) %>%
-#   mutate(Disease_Status = factor(Disease_Status, levels = c("ND", "AAb+", "T1D")))
-
-# seuDf %>%
-#   ggplot(aes(x = DonorID, y = heatShockProgram1, fill = TissueCondensed)) +
-#   geom_boxplot(position = position_dodge2(width = 0.8, preserve = "single")) +
-#   theme_bw() +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
-#   geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
-# 
-# 
-# seuDf %>%
-#   ggplot(aes(x = manualAnnot, y = heatShockProgram1)) +
-#   geom_boxplot(position = position_dodge2(width = 0.8, preserve = "single")) +
-#   theme_bw() +
-#   textSizeOnlyTheme +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   scale_color_discrete(limits = levels(manualClusterOrder)) +
-#   theme(plot.margin = margin(3, 3, 3, 3, "lines")) +
-#   geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
-#   geom_hline(yintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
-# 
-# seuDf %>%
-#   ggplot(aes(x = heatShockProgram1, color = TissueCondensed)) +
-#   geom_density() +
-#   theme_classic() +
-#   geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.90), color = "red") +
-#   geom_vline(xintercept = quantile(seuMerged$heatShockProgram1, probs = 0.95), color = "blue")
-
-# rm(seuDf)
-
 ##### START run this again after loading manual annot rdata
 hspCutoff <- quantile(seuMerged$heatShockProgram1, probs = 0.95)
 
@@ -596,8 +507,8 @@ manualClusterOrder <- factor(manualClusterOrder, levels = customSortAnnotation(m
 ################################################################################
 # wgcna analysis for pLN only
 ################################################################################
-wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v2.rds"
-wcgnaCheckpointImage <- "rds/postNetworkPostModule_pLN_ND_T1D_v2.RData"
+wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
+wcgnaCheckpointImage <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.RData"
 if (!file.exists(wcgnaCheckpointFile)) {
   # filter dataset to remove cells with >95 percentile of hsp gene signatures
   seuMergedSmol <- subset(seuMerged, subset = heatShockProgram1 < hspCutoff & TissueCondensed == "pLN" & Disease_Status %in% c("ND", "T1D"))
@@ -646,14 +557,15 @@ if (!file.exists(wcgnaCheckpointFile)) {
     seuMergedSmol,
     soft_power = 9, #adjust this based on the threshold identified from previous graph...
     setDatExpr = FALSE,
-    tom_name = 'nd_t1d_pln_topological' # name of the topological overlap matrix written to disk
+    tom_name = 'nd_t1d_pln_topological_v3' # name of the topological overlap matrix written to disk
   )
   
   PlotDendrogram(seuMergedSmol, main='ND/T1D pLN hdWGCNA Dendrogram')
-  gc()
   
   seuMergedSmol <- ScaleData(seuMergedSmol, features = VariableFeatures(seuMergedSmol), assay = "RNA")
-  save.image("rds/postNetworkPreModule_pLN_ND_T1D_v2.RData")
+  
+  gc()
+  save.image("rds/postNetworkPreModule_pLN_ND_T1D_v3.RData")
   
   # this step is massive in RAM usage...
   seuMergedSmol <- ModuleEigengenes(
@@ -661,6 +573,7 @@ if (!file.exists(wcgnaCheckpointFile)) {
     group.by.vars = c("DonorID")
   )
   
+  gc()
   save.image(wcgnaCheckpointImage)
   
   seuMergedSmol <- ModuleConnectivity(
@@ -699,150 +612,6 @@ if (!file.exists(wcgnaCheckpointFile)) {
   load(wcgnaCheckpointImage)
   seuMergedSmol <- readRDS(wcgnaCheckpointFile)
 }
-
-# compute correlations to traits
-seuMergedSmol <- ModuleTraitCorrelation(
-  seuMergedSmol,
-  traits = c("Disease_Status"),
-  group.by = "manualAnnot"
-)
-
-moduleTraitCorRes <- GetModuleTraitCorrelation(seuMergedSmol)
-
-corMatrix <- do.call("rbind", moduleTraitCorRes$cor)
-fdrMatrix <- do.call("rbind", moduleTraitCorRes$fdr)
-
-tmp <- Heatmap(
-  matrix = corMatrix,
-  cluster_columns = FALSE,
-  cluster_rows = FALSE,
-  show_row_names = TRUE,
-  row_title_rot = 0,
-  row_names_gp = gpar(fontsize = 8),
-  column_names_gp = gpar(fontsize = 10),
-  column_names_rot = 45,
-  row_gap = unit(5, "pt"),
-  cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
-    fdrVal <- fdrMatrix[i,j]
-    fdrText <- symnum(
-      fdrVal,
-      corr = FALSE, na = FALSE,
-      cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-      symbols = c("***", "**", "*", " ", ""))
-
-    grid.text(fdrText, x, y, gp = gpar(fontsize = 8))
-  },
-  name = "Module Trait Correlation",
-  heatmap_legend_param = list(
-    direction = "vertical"),
-  row_title_gp = gpar(fontsize = 10)
-)
-draw(tmp, padding = unit(c(1, 3, 1, 1), "lines"))
-
-tmp <- which(fdrMatrix < 0.05 & abs(corMatrix) > 0.3)
-arrayInd(tmp, .dim = dim(corMatrix))
-
-
-# modules of interest from Greg
-gregModulesInterest <- read.csv("modules_genes_followup.csv")
-
-seuMergedHspCutoff <- subset(seuMerged, subset = heatShockProgram1 < hspCutoff & TissueCondensed == "pLN")
-seuMergedHspCutoff$Disease_Status <- factor(seuMergedHspCutoff$Disease_Status, levels = c("ND", "AAb+", "T1D"))
-seuMergedHspCutoff$manualAnnot <- factor(seuMergedHspCutoff$manualAnnot, levels = levels(manualClusterOrder))
-
-# look at all pop comparison
-genesAllPopComparison <- gregModulesInterest[gregModulesInterest$compare_across_all_cell_pops, "gene_name"]
-genesAllPopComparison <- unique(genesAllPopComparison)
-
-genesAllPopComparisonAvgMat <- AverageExpression(
-  object = seuMergedHspCutoff,
-  assays = "RNA",
-  features = genesAllPopComparison,
-  group.by = c("manualAnnot", "Disease_Status"),
-  slot = "data")
-
-genesAllPopComparisonAvgMat <- genesAllPopComparisonAvgMat$RNA
-
-colGroup <- rep(levels(seuMergedHspCutoff$Disease_Status), times = length(levels(seuMergedHspCutoff$manualAnnot)))
-colGroup <- factor(colGroup, levels = levels(seuMergedHspCutoff$Disease_Status))
-
-colSplit <- rep(levels(seuMergedHspCutoff$manualAnnot), each = length(levels(seuMergedHspCutoff$Disease_Status)))
-
-p <- Heatmap(
-  matrix = t(scale(t(genesAllPopComparisonAvgMat))),
-  cluster_columns = FALSE,
-  cluster_rows = FALSE,
-  show_row_names = TRUE,
-  show_column_names = FALSE,
-  row_names_gp = gpar(fontsize = 12),
-  column_names_gp = gpar(fontsize = 7),
-  column_names_rot = 45,
-  column_split = colSplit,
-  bottom_annotation = columnAnnotation(
-    `Disease\nStatus` = colGroup,
-    col = list(`Disease\nStatus` = DISEASESTATUSCOLORS),
-    annotation_legend_param = list(`Disease\nStatus` = list(direction = "horizontal"))),
-  name = "Scaled Average\nExpression",
-  heatmap_legend_param = list(
-    direction = "horizontal",
-    title_position = "topcenter"),
-  row_title_gp = gpar(fontsize = 8),
-  column_title_side = "bottom",
-  column_title_rot = 90,
-  column_title_gp = gpar(fontsize = 10),
-)
-
-draw(p,
-  merge_legend = TRUE,
-  padding = unit(c(5, 3, 3, 1), "lines"),
-  annotation_legend_side = "bottom",
-  heatmap_legend_side = "bottom")
-
-
-# look at specific modules of interest
-tmp <- gregModulesInterest %>%
-  filter(cell_population != "all") %>%
-  group_by(module) %>%
-  summarize(popInterest = unique(cell_population))
-
-uniqModules <- unique(tmp$module)
-modulePopsDict <- lapply(uniqModules, function(x) {
-  y <- unlist(tmp[tmp$module == x, "popInterest"])
-  names(y) <- NULL
-  
-  return(y)
-})
-names(modulePopsDict) <- uniqModules
-
-moduleGeneDict <- lapply(uniqModules, function(x) {
-  y <- unlist(gregModulesInterest[gregModulesInterest$module == x, "gene_name"])
-  y <- unique(y)
-  names(y) <- NULL
-  
-  return(y)
-})
-names(moduleGeneDict) <- uniqModules
-
-moduleVlnPlots <- lapply(uniqModules, function(x) {
-  popsOfInterest <- modulePopsDict[[x]]
-  genesOfInterest <- moduleGeneDict[[x]]
-  
-  if (length(popsOfInterest) > 5) {
-    ncols <- 2
-  } else {
-    ncols <- 4
-  }
-  
-  seu <- subset(seuMergedHspCutoff, subset = manualAnnot %in% popsOfInterest)
-  p <- VlnPlot(seu,
-    features = genesOfInterest,
-    group.by = "manualAnnot",
-    split.by = "Disease_Status",
-    pt.size = 0,
-    ncol = ncols
-  ) &
-    scale_fill_manual(values = DISEASESTATUSCOLORS)
-})
 
 ################################################################################
 # generating subplots for figures

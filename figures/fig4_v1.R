@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -21,7 +21,7 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
 
     return(tmp)
 })
@@ -105,7 +105,7 @@ figB <- dfDiseaseScales %>%
 ################################################################################
 # Figure C: Heatmap of top 10 genes in module 15
 ################################################################################
-wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v2.rds"
+wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
 seuWcgna <- tryCatch(
   {
     print(head(seuWcgna$TissueCondensed))
@@ -142,8 +142,8 @@ hub_df <- do.call(rbind, lapply(mods, function(cur_mod){
   cur
 }))
 
-module15Genes <- hub_df %>%
-  filter(module == "T1D-M15") %>%
+module14Genes <- hub_df %>%
+  filter(module == "T1D-M14") %>%
   arrange(desc(kME))
 
 
@@ -151,31 +151,31 @@ seu_naiveT_pln <- subset(seu,
   subset = TissueCondensed == "pLN" & manualAnnot %in% c("CD4 naive #1", "CD4 naive #2", "CD8 naive #1", "CD8 naive #2"))
 
 # top 10 heatmap
-module15AvgExp <- AverageExpression(
+module14AvgExp <- AverageExpression(
   object = seu_naiveT_pln,
   assays = "RNA",
   return.seurat = FALSE,
-  features = module15Genes[c(1:10), "gene_name"],
+  features = module14Genes[c(1:10), "gene_name"],
   group.by = c("Disease_Status", "manualAnnot"),
   slot = "data")
 
-module15_df <- scale(t(module15AvgExp$RNA)) %>%
+module14_df <- scale(t(module14AvgExp$RNA)) %>%
   as.data.frame(.) %>%
   mutate(category = rownames(.)) %>%
   separate(category, sep = "_", into = c("disease", "cluster")) %>%
   pivot_wider(names_from = disease, values_from = c(1:10)) %>%
   relocate(c("cluster"), c(1))
 
-module15_mat <- as.matrix(module15_df[, c(2:ncol(module15_df))])
-rownames(module15_mat) <- module15_df$cluster
+module14_mat <- as.matrix(module14_df[, c(2:ncol(module14_df))])
+rownames(module14_mat) <- module14_df$cluster
 
-fig_module15 <- Heatmap(
-  matrix = module15_mat,
+fig_module14 <- Heatmap(
+  matrix = module14_mat,
   cluster_columns = FALSE,
   cluster_rows = TRUE,
   show_row_names = TRUE,
   show_column_names = FALSE,
-  column_split = rep(module15Genes[c(1:10), "gene_name"], each = 3),
+  column_split = rep(module14Genes[c(1:10), "gene_name"], each = 3),
   row_names_gp = gpar(fontsize = 6),
   row_dend_width = unit(3, "points"),
   name = "Avg Expression",
@@ -189,7 +189,7 @@ fig_module15 <- Heatmap(
   row_title_gp = gpar(fontsize = 8),
   column_title_gp = gpar(fontsize = 4),
   bottom_annotation = ComplexHeatmap::HeatmapAnnotation(
-    `Disease Status` = factor(str_split_fixed(colnames(module15_mat), "_", n = 2)[, 2], levels = c("ND", "AAb+", "T1D")),
+    `Disease Status` = factor(str_split_fixed(colnames(module14_mat), "_", n = 2)[, 2], levels = c("ND", "AAb+", "T1D")),
     col = list(`Disease Status` = COLORS[["disease"]]),
     annotation_name_gp = gpar(fontsize = 6),
     annotation_legend_param = list(
@@ -306,19 +306,19 @@ fig_naiveGenesOfInterest <- Reduce('+', VlnPlot(
 seu_naiveT_pln$Disease_StatusWithManualAnnnot <- paste0(seu_naiveT_pln$Disease_Status, "_", seu_naiveT_pln$manualAnnot)
 
 Idents(seu_naiveT_pln) <- "Disease_StatusWithManualAnnnot"
-module15Deg_cd4Naive1 <- FindMarkers(
+module14Deg_cd4Naive1 <- FindMarkers(
   object = seu_naiveT_pln,
   ident.1 = "ND_CD4 naive #1",
   ident.2 = "T1D_CD4 naive #1",
-  features = module15Genes$gene_name,
+  features = module14Genes$gene_name,
   logfc.threshold = 0.1
 )
 
-module15Deg_cd4Naive2 <- FindMarkers(
+module14Deg_cd4Naive2 <- FindMarkers(
   object = seu_naiveT_pln,
   ident.1 = "ND_CD4 naive #2",
   ident.2 = "T1D_CD4 naive #2",
-  features = module15Genes$gene_name,
+  features = module14Genes$gene_name,
   logfc.threshold = 0.1
 )
 
@@ -368,8 +368,8 @@ fig4DegLollipops <- function(deg, title) {
   return(p)
 }
 
-fig_cd4Degs <- (fig4DegLollipops(module15Deg_cd4Naive1, "CD4 naive #1") +
-  fig4DegLollipops(module15Deg_cd4Naive2, "CD4 naive #2")) / 
+fig_cd4Degs <- (fig4DegLollipops(module14Deg_cd4Naive1, "CD4 naive #1") +
+  fig4DegLollipops(module14Deg_cd4Naive2, "CD4 naive #2")) / 
   ggplot(data.frame(l = "Average log2 Fold Change", x = 1, y = 1)) +
     geom_text(aes(x, y, label = l), angle = 0, size = 6 / ggplot2::.pt) + 
     theme_void() +
@@ -378,7 +378,7 @@ fig_cd4Degs <- (fig4DegLollipops(module15Deg_cd4Naive1, "CD4 naive #1") +
   plot_layout(heights = c(99, 1))
 
 
-module15Deg_cd4Naive2 %>% 
+module14Deg_cd4Naive1 %>% 
   mutate(gene = rownames(.)) %>%
   filter(gene %in% naiveGenesOfInterest)
 
@@ -386,24 +386,24 @@ module15Deg_cd4Naive2 %>%
 ################################################################################
 # Fig H: cd8 degs
 ################################################################################
-module15Deg_cd8Naive1 <- FindMarkers(
+module14Deg_cd8Naive1 <- FindMarkers(
   object = seu_naiveT_pln,
   ident.1 = "ND_CD8 naive #1",
   ident.2 = "T1D_CD8 naive #1",
-  features = module15Genes$gene_name,
+  features = module14Genes$gene_name,
   logfc.threshold = 0.1
 )
 
-module15Deg_cd8Naive2 <- FindMarkers(
+module14Deg_cd8Naive2 <- FindMarkers(
   object = seu_naiveT_pln,
   ident.1 = "ND_CD8 naive #2",
   ident.2 = "T1D_CD8 naive #2",
-  features = module15Genes$gene_name,
+  features = module14Genes$gene_name,
   logfc.threshold = 0.1
 )
 
-fig_cd8Degs <- (fig4DegLollipops(module15Deg_cd8Naive1, "CD8 naive #1") +
-    fig4DegLollipops(module15Deg_cd8Naive2, "CD8 naive #2")) / 
+fig_cd8Degs <- (fig4DegLollipops(module14Deg_cd8Naive1, "CD8 naive #1") +
+    fig4DegLollipops(module14Deg_cd8Naive2, "CD8 naive #2")) / 
   ggplot(data.frame(l = "Average log2 Fold Change", x = 1, y = 1)) +
   geom_text(aes(x, y, label = l), angle = 0, size = 6 / ggplot2::.pt) + 
   theme_void() +
@@ -412,7 +412,7 @@ fig_cd8Degs <- (fig4DegLollipops(module15Deg_cd8Naive1, "CD8 naive #1") +
   plot_layout(heights = c(99, 1))
 
 
-module15Deg_cd8Naive2 %>% 
+module14Deg_cd8Naive1 %>% 
   mutate(gene = rownames(.)) %>%
   filter(gene %in% naiveGenesOfInterest)
 
@@ -441,7 +441,7 @@ layout <- c(
 p <- wrap_elements(plot = figA) +
   wrap_elements(plot = figB) +
   wrap_elements(full = grid.grabExpr(
-    draw(fig_module15,
+    draw(fig_module14,
       heatmap_legend_side = "bottom",
       annotation_legend_side = "bottom",
       merge_legend = TRUE,
@@ -461,7 +461,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig4_v2_final",
+  fn = "fig4_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,

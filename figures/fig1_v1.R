@@ -1,4 +1,4 @@
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -33,20 +33,22 @@ legendTheme <- theme(
 
 figA <- omiq_umap_coordinate_lnmc %>%
   ggplot(aes(x = umap_1, y = umap_2, color = OmiqFilter)) +
-  geom_point(size = 0.2) +
+  geom_point(size = 0.1) +
   labs(
     x = "UMAP 1",
-    y = "UMAP 2"
+    y = "UMAP 2",
+    title = "Lymph Node: HPAP-099"
   ) +
   theme_classic() +
   scale_color_manual(values = COLORS$expanded_palette)
 
 figB <- omiq_umap_coordinate_snmc %>%
   ggplot(aes(x = umap_1, y = umap_2, color = OmiqFilter)) +
-  geom_point(size = 0.2) +
+  geom_point(size = 0.1) +
   labs(
     x = "UMAP 1",
     y = "UMAP 2",
+    title = "Spleen: HPAP-099"
   ) +
   theme_classic() +
   scale_color_manual(values = COLORS$expanded_palette)
@@ -55,7 +57,7 @@ ab_legend <- ggpubr::as_ggplot(get_legend(figA +
     guides(colour = guide_legend(
       override.aes = list(size = 2.5, alpha = 1),
       nrow = 10,
-      title = "Legend for (A) and (B)",
+      title = "Combined legend for (A) and (B)",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -233,10 +235,10 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-12_16-27-41.rds")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
     
     return(tmp)
-  })
+})
 
 
 # one of the clusters has an extra space so just removing it here
@@ -252,8 +254,10 @@ manualClusterOrder <- factor(manualClusterOrder,
   levels = sortedClust,
   labels = sortedClust)
 
+# rename mesLN as mLN
+seu$TissueCondensed <- ifelse(seu$TissueCondensed == "mesLN", "mLN", seu$TissueCondensed)
 
-figF <- DimPlot(seu, reduction = "rna.umap", group.by = "TissueCondensed") +
+figF <- DimPlot(seu, reduction = "rna.umap", shuffle = TRUE, group.by = "TissueCondensed") +
   scale_color_manual(values = COLORS[["tissue"]]) +
   labs(title = "Tissue")
 figG <- DimPlot(seu, reduction = "rna.umap", group.by = "Disease_Status", shuffle = TRUE) +
@@ -323,7 +327,7 @@ frequencyDf <- data.frame(
   diseaseStatus = seu$Disease_Status) %>%
   mutate(diseaseStatus = factor(diseaseStatus, levels = c("ND", "AAb+", "T1D"))) %>%
   mutate(cluster = factor(stringr::str_trim(cluster), levels = levels(manualClusterOrder))) %>%
-  mutate(tissue = factor(tissue, levels = c("pLN", "mesLN", "Spleen"), labels = c("pLN", "mLN", "Spleen")))
+  mutate(tissue = factor(tissue, levels = c("pLN", "mLN", "Spleen"), labels = c("pLN", "mLN", "Spleen")))
 
 frequencyPlotTheme <- list(
   theme_bw(),
@@ -411,7 +415,7 @@ p <- wrap_elements(full = figAB_final, ignore_tag = TRUE) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig1_v2_final",
+  fn = "fig1_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,

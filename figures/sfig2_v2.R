@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -298,7 +298,7 @@ p <- wrap_elements(plot = LinPopsGraphs[[3]]) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig2_v2_final",
+  fn = "sfig2_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8,

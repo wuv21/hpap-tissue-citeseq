@@ -1,5 +1,5 @@
 # note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -95,7 +95,7 @@ seu <- tryCatch(
   },
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
 
     return(tmp)
 })
@@ -236,82 +236,56 @@ fig_treg <- Heatmap(
 
 
 ################################################################################
-# NEW: subcluster cd4 tcm/treg
+# NEW: pca
 ################################################################################
-# seu_pln_treg_sub <- seu_pln_treg
-# 
-# Idents(seu_pln_treg_sub) <- "manualAnnot"
-# seu_pln_treg_sub <- FindNeighbors(seu_pln_treg_sub, assay = "RNA", reduction = "harmonyRNA", dims = 1:30)
-# 
-# seu_pln_treg_sub <- FindSubCluster(
-#   seu_pln_treg_sub,
-#   cluster = "CD4 Tcm/Treg",
-#   graph.name = "RNA_nn",
-#   subcluster.name = "subcluster",
-#   resolution = 0.5)
-# 
-# 
-# customCd4Genes <- read.csv("miscellaneous_gene_lists/CD4_genes.csv")
-# 
-# labellerAdt <- tsaCatalog$cleanName
-# names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
-# 
-# subclusterAdtRidges <- RidgePlot(seu_pln_treg_sub,
-#   features = customCd4Genes[customCd4Genes$modality == "ADT", "DNA_ID"],
-#   group.by = "subcluster",
-#   combine = FALSE)
-# 
-# subclusterAdtRidges <- lapply(subclusterAdtRidges, function(x) {
-#   x$labels$title <- labellerAdt[x$labels$title]
-#   
-#   x <- x +
-#     subplotTheme +
-#     theme(
-#       plot.margin = margin(3,3,3,3),
-#       plot.title = element_text(size = BASEPTFONTSIZE),
-#       axis.text = element_text(size = BASEPTFONTSIZE),
-#       axis.title.y = element_blank(),
-#       axis.title.x = element_blank(),
-#       legend.position = "blank") 
-#   
-#   x$layers[[1]]$geom$default_aes$alpha <- 0.3
-#   
-#   return(x)
-# })
-# 
-# subclusterRnaRidges <- RidgePlot(seu_pln_treg_sub,
-#   features = toupper(customCd4Genes[customCd4Genes$modality == "RNA", "geneName"]),
-#   group.by = "subcluster",
-#   combine = FALSE)
-# 
-# subclusterRnaRidges <- lapply(subclusterRnaRidges, function(x) {
-#   x <- x +
-#     subplotTheme +
-#     theme(
-#       plot.margin = margin(3,3,3,3),
-#       plot.title = element_text(size = BASEPTFONTSIZE),
-#       axis.text = element_text(size = BASEPTFONTSIZE),
-#       axis.title.y = element_blank(),
-#       axis.title.x = element_blank(),
-#       legend.position = "blank") 
-#   
-#   x$layers[[1]]$geom$default_aes$alpha <- 0.3
-#   
-#   return(x)
-# })
-# 
-# subclusterRnaVln <- VlnPlot(seu_pln_treg_sub,
-#   features = toupper(customCd4Genes[customCd4Genes$modality == "RNA", "geneName"]),
-#   group.by = "subcluster",
-#   pt.size = 0.2,
-#   combine = TRUE)
-# 
-# subclusterRnaVln &
-#     theme(legend.position = "blank",
-#       axis.text = element_text(size = 5),
-#       plot.title = element_text(size = 7),
-#       axis.title = element_blank())
+treg_avg_exp_by_sample <- AverageExpression(
+  object = seu_pln_treg,
+  assays = "RNA",
+  return.seurat = FALSE,
+  features = treg_gene_list,
+  group.by = "DonorID",
+  slot = "data")
 
+
+pca_meta <- data.frame(
+  donorID = seu_pln_treg$DonorID,
+  Disease_Status = seu_pln_treg$Disease_Status
+) %>%
+  distinct(donorID, Disease_Status)
+
+rownames(pca_meta) <- pca_meta$donorID
+
+treg_pca <- prcomp(t(treg_avg_exp_by_sample$RNA), center = TRUE, scale. = TRUE)
+
+variances <- (treg_pca$sdev ** 2) / sum((treg_pca$sdev ** 2)) * 100
+
+scores <- data.frame(treg_pca$x[, 1:2])
+scores[] <- lapply(scores, function(x) x / sqrt(sum((x - mean(x))^2)))
+
+loadings <- as.data.frame(treg_pca$rotation)[1:2]
+scale <- min(max(abs(scores$PC1))/max(abs(loadings$PC1)),
+  max(abs(scores$PC2))/max(abs(loadings$PC2))) * 0.5
+
+loadings$gene <- rownames(loadings)
+
+scores$Disease_Status <- pca_meta[rownames(scores), "Disease_Status"]
+
+ggplot(scores, aes(x = PC1, y = PC2))+
+  geom_point(aes(color = Disease_Status), size = 3) +
+  scale_color_manual(values = COLORS$disease) +
+  geom_segment(data = loadings,
+    aes(x = 0, y = 0, xend = PC1, yend = PC2),
+    color = "red", arrow = arrow(angle = 25, length = unit(4, "mm"))) +
+  geom_text(data = loadings, aes(x = PC1 * 1.1, y = PC2 * 1.1, label = gene), hjust = 0.5, vjust = 0.5) +
+  theme_classic() +
+  labs(color = "Disease status")
+
+
+# factor analysis
+# treg_factanal <- factanal(t(treg_avg_exp_by_sample$RNA), factors = 3, scores = 'regression')
+# autoplot(treg_factanal, data = pca_meta, colour = 'Disease_Status', loadings = TRUE, loadings.label = TRUE) +
+#   scale_color_manual(values = COLORS$disease) +
+#   theme_classic()
 
 
 ################################################################################
@@ -381,7 +355,7 @@ p <- wrap_elements(plot = figA) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "fig3_final",
+  fn = "fig3_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 6.5,

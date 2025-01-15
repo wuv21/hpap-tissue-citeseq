@@ -17,7 +17,7 @@ library(stringr)
 set.seed(42)
 
 
-wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v2.rds"
+wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
 seuWcgna <- tryCatch(
   {
     print(head(seuWcgna$TissueCondensed))
@@ -73,7 +73,7 @@ hub_df <- do.call(rbind, lapply(mods, function(cur_mod){
 }))
 
 
-mods_of_interest <- c(1:5,9:14,16,17)
+mods_of_interest <- c(1:4,7:13, 15, 16)
 mods_of_interest <- paste0("T1D-M", mods_of_interest)
 
 plot_list_kmes <- lapply(mods_of_interest, function(x) {
@@ -194,7 +194,7 @@ p <- wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 4)) +
 saveFinalFigure(
   plot = p,
   prefixDir = "figures/outs",
-  fn = "sfig4_v2_final",
+  fn = "sfig4_v3_final",
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,
