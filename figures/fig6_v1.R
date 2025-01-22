@@ -14,9 +14,17 @@ library(Seurat)
 library(grid)
 
 #################################################################################
+# %%
+#################################################################################
+
+FLOW_RDS_PATH="./figures/greg_flow_data/rds/dfLineageFilter.rds"
+SC_RDS_PATH="/home/ubuntu/projmnt/betts/hpap/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
+set.seed(42)
+
+#################################################################################
 # %% A - B cell differences in NK cells
 ################################################################################
-fd = readRDS("./figures/greg_flow_data/rds/dfLineageFilter.rds") %>%
+fd = readRDS(FLOW_RDS_PATH) %>%
   filter(LN_type == "pLN" & metric == "NK CD56dimCD16+") %>%
   mutate(`Disease Status` = factor(`Disease Status`, levels = c("ND", "AAb+", "T1D")))
 figA =  ggplot(fd, aes(`Disease Status`, value, color = `Disease Status`)) +
@@ -67,7 +75,7 @@ figB = ggplot() +
 COMPAREVAR="Disease_Status"
 ANNOTVAR="groupedAnnot"
 
-seu = readRDS("outs/rds/seuMergedPostHSP_forFigures_2023-09-17_09-03-10.rds")
+seu = readRDS(SC_RDS_PATH)
 so_pln_only = subset(seu, Tissue %in% c("pLN-H", "pLN-T"))
 
 clusters = unique(so_pln_only[["manualAnnot"]])
@@ -95,11 +103,17 @@ sig_genes = compsout_nk_rna[compsout_nk_rna$gene %in% goirb & compsout_nk_rna$ma
 sig_genes$gene = factor(sig_genes$gene, levels=sig_genes$gene[order(sig_genes$avg_log2FC, decreasing=FALSE)])
 sig_genes$pvalsymm = pValSymnum(sig_genes$p_val_adj_all)
 
+sig_genes
+compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),]
+fig6_de_stats = compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),c("gene", "avg_log2FC", "p_val_adj_all", "pct.1", "pct.2", "upregulated", "matchup")]
+fig6_de_stats
+write.table(fig6_de_stats, file="fig6_de_stats.csv", sep=",", quote=F, row.names=F)
+# %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   geom_bar(stat="identity", color = "black", lwd=0.15) +
   scale_fill_manual(values = COLORS[["pval-heatmap"]]) +
-  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.8, hjust=0, fontface="bold")+
-  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.8, hjust=1, fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.75, hjust=0, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.75, hjust=1, family="sans", fontface="bold")+
   scale_color_manual(values=c("ns" = "black", "*" = "black", "**" = "black", "***" = "white")) +
   geom_hline(yintercept = 0, color = "black") +
   guides(color="none") +
@@ -108,27 +122,27 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   theme_classic() +
   subplotTheme +
   theme(
-  plot.background = element_blank(),
-  panel.background = element_blank(),
-  rect = element_blank(),
-  legend.position = c(0.85,0.20),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        rect = element_blank(),
+        legend.position = c(0.85,0.20),
         legend.text = element_text(size=4),
         legend.key.height=unit(1.5,"mm"),
         legend.key.width =unit(1.5,"mm"),
-    plot.title = element_text(size=5, hjust=0.5),
-    plot.title.position = "panel",
-    plot.margin = margin(0.254,0,0.15,0, "cm"),
-    panel.spacing = unit(0, "pt"),
-    panel.grid = element_blank(),
-    axis.text.x = element_text(size=4, color="black"),
-    axis.title.x = element_text(size=5, color="black",vjust=3),
-    axis.text.y = element_blank(),
-    axis.title.y = element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.ticks.length.y = unit(0,"cm"),
-    legend.title = element_blank(),
-    axis.line.y = element_blank()
+        plot.title = element_text(size=5, hjust=0.5),
+        plot.title.position = "panel",
+        plot.margin = margin(0.254,0,0.15,0, "cm"),
+        panel.spacing = unit(0, "pt"),
+        panel.grid = element_blank(),
+        axis.text.x = element_text(size=4, color="black"),
+        axis.title.x = element_text(family="sans", size=5, color="black",vjust=2),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.length.y = unit(0,"cm"),
+        legend.title = element_blank(),
+        axis.line.y = element_blank()
   )
 
 #################################################################################
@@ -159,25 +173,25 @@ for (g in genes_of_interest) {
   pltdata =nkvioplt %>% filter(Gene == g)
   maxy = max(pltdata$normalized_expression)
   p = ggplot(data = pltdata, aes(x = Disease_Status, y = normalized_expression, fill = Disease_Status)) +
-  geom_violin(color = "black", scale = "width", lwd=0.1) +
-  geom_boxplot(color = "black", alpha = 0.5, width=0.2, notch=TRUE,  outlier.size=0.05, outlier.alpha=0.25, lwd=0.1) + 
-  ylim(0,maxy*1.25) +
-  scale_fill_manual(values=COLORS[["disease"]]) +
-  ylab("Norm. Expr.") +
-  guides(fill = "none") +
-  ggtitle(sprintf("pLN %s", g)) +
-  theme_classic() +
-  subplotTheme +
-  theme(
-        axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        plot.title = element_text(size=6, hjust=0.5),
-        plot.title.position = "panel",
-        panel.grid = element_blank(),
-        axis.text.y = element_text(size=5),
-        axis.title.y = element_text(size=5),
-        plot.margin = unit(c(0,1,1,1), "mm")
-  )
+    geom_violin(color = "black", scale = "width", lwd=0.1) +
+    geom_boxplot(color = "black", alpha = 0.5, width=0.2, notch=TRUE,  outlier.size=0.05, outlier.alpha=0.25, lwd=0.1) + 
+    ylim(0,maxy*1.25) +
+    scale_fill_manual(values=COLORS[["disease"]]) +
+    ylab("Norm. Expr.") +
+    guides(fill = "none") +
+    ggtitle(sprintf("pLN %s", g)) +
+    theme_classic() +
+    subplotTheme +
+    theme(
+          axis.title.x = element_blank(),
+          axis.text.x = element_blank(),
+          plot.title = element_text(size=6, hjust=0.5),
+          plot.title.position = "panel",
+          panel.grid = element_blank(),
+          axis.text.y = element_text(size=5),
+          axis.title.y = element_text(size=5),
+          plot.margin = unit(c(0,1,1,1), "mm")
+    )
   if (i == 2) {
     p = p + theme(
       axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1, color = "#000000")
@@ -300,14 +314,13 @@ figF = ComplexHeatmap::Heatmap(
 )
 figF = grid.grabExpr(draw(figF, column_title = "", column_title_gp = gpar(fontsize = 5), padding = unit(c(0, 0, 0, 0), "pt"), gap=unit(0,"mm")))
 
-
 # %%
 fig6layout <- c(
   patchwork::area(1,1,30,12), #a
   patchwork::area(1,13,30,30), #b
-  patchwork::area(31,1,90,14), #c
-  patchwork::area(31,15,60,30), #d
-  patchwork::area(61,15,90,30), #e
+  patchwork::area(31,1,90,15), #c
+  patchwork::area(31,16,60,30), #d
+  patchwork::area(61,16,90,30), #e
   patchwork::area(91,1,150,14), #f
   patchwork::area(91,15,150,30) #g
   )
@@ -318,11 +331,15 @@ plot = wrap_elements(full=figA) + figB +
   patchwork::plot_annotation(tag_levels = list(LETTERS[1:7]))
 
 # %%
+source("figures/genericFigureSettings.R")
 saveFinalFigure(plot=plot,
-                prefixDir = "figures/outs",
-                fn = "fig6_v1",
-                devices = c("pdf"),
+                # prefixDir = "figures/outs",
+                prefixDir = "/srv/http/betts/hpap/final_figures",
+                fn = "fig6_v2",
+                devices = c("Cairo"),
                 addTimestamp = FALSE,
                 gheight=5.50,
                 gwidth=3.75)
+
+# %%
 
