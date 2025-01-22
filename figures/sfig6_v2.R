@@ -127,40 +127,11 @@ tmp <- lapply(tmp, function(x) {
   return(x)
 })
 
-################################################################################
-# S7B - naive t cell rna
-################################################################################
-genesOfInterest <- c("CD69", "CCR7", "TCF7")
-
-# base rna dot style
-figBBase <- DotPlot(seu_pln,
-  features = genesOfInterest,
-  group.by = "manualAnnot",
-  cols = "RdYlBu")
-
-figB <- figBBase +
-  scale_y_discrete(limits = rev(clustersForFigure)) +
-  textSizeOnlyTheme +
-  theme(
-    axis.title = element_blank(),
-    panel.grid.major.y = element_line(color = "#eeeeee"),
-    axis.text.x = element_text(angle = 45, size = BASEPTFONTSIZE, hjust = 1))
-
-
 
 ################################################################################
 # Final layout and plot all
 ################################################################################
-layout <- c(
-  area(1, 1, 7, 10), #a
-  area(8, 1, 10, 7) #b
-)
-
-p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3)) +
-  wrap_elements(plot = figB) +
-  plot_annotation(tag_levels = list(LETTERS[1:2])) +
-  plot_layout(design = layout) &
-  plotTagTheme
+p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3))
 
 saveFinalFigure(
   plot = p,
@@ -169,5 +140,5 @@ saveFinalFigure(
   devices = c("pdf", "png"),
   addTimestamp = TRUE,
   gwidth = 8.5,
-  gheight = 10)
+  gheight = 7)
 
