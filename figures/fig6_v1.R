@@ -103,12 +103,17 @@ sig_genes = compsout_nk_rna[compsout_nk_rna$gene %in% goirb & compsout_nk_rna$ma
 sig_genes$gene = factor(sig_genes$gene, levels=sig_genes$gene[order(sig_genes$avg_log2FC, decreasing=FALSE)])
 sig_genes$pvalsymm = pValSymnum(sig_genes$p_val_adj_all)
 
+sig_genes
+compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),]
+fig6_de_stats = compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),c("gene", "avg_log2FC", "p_val_adj_all", "pct.1", "pct.2", "upregulated", "matchup")]
+fig6_de_stats
+write.table(fig6_de_stats, file="fig6_de_stats.csv", sep=",", quote=F, row.names=F)
 # %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   geom_bar(stat="identity", color = "black", lwd=0.15) +
   scale_fill_manual(values = COLORS[["pval-heatmap"]]) +
-  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.8, hjust=0, family="sans", fontface="bold")+
-  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.8, hjust=1, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.75, hjust=0, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.75, hjust=1, family="sans", fontface="bold")+
   scale_color_manual(values=c("ns" = "black", "*" = "black", "**" = "black", "***" = "white")) +
   geom_hline(yintercept = 0, color = "black") +
   guides(color="none") +
@@ -313,9 +318,9 @@ figF = grid.grabExpr(draw(figF, column_title = "", column_title_gp = gpar(fontsi
 fig6layout <- c(
   patchwork::area(1,1,30,12), #a
   patchwork::area(1,13,30,30), #b
-  patchwork::area(31,1,90,14), #c
-  patchwork::area(31,15,60,30), #d
-  patchwork::area(61,15,90,30), #e
+  patchwork::area(31,1,90,15), #c
+  patchwork::area(31,16,60,30), #d
+  patchwork::area(61,16,90,30), #e
   patchwork::area(91,1,150,14), #f
   patchwork::area(91,15,150,30) #g
   )
@@ -326,11 +331,12 @@ plot = wrap_elements(full=figA) + figB +
   patchwork::plot_annotation(tag_levels = list(LETTERS[1:7]))
 
 # %%
+source("figures/genericFigureSettings.R")
 saveFinalFigure(plot=plot,
                 # prefixDir = "figures/outs",
                 prefixDir = "/srv/http/betts/hpap/final_figures",
                 fn = "fig6_v2",
-                devices = c("pdf_base"),
+                devices = c("Cairo"),
                 addTimestamp = FALSE,
                 gheight=5.50,
                 gwidth=3.75)
