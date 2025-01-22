@@ -612,6 +612,13 @@ fig_vlnGK_mesln <- data.frame(
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000")
   )
 
+findMarkersCombinatorial(
+  seu_mesln_nk,
+  combVar = "Disease_Status",
+  features = c("GZMB", "KLRB1")
+) %>%
+  select(-p_val_adj)
+
 ################################################################################
 # P - gzmb klrb1 in nk in spleen
 ################################################################################
@@ -642,6 +649,13 @@ fig_vlnGK_spleen <- data.frame(
     axis.text = element_text(size = 6, color = "#000000"),
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000")
   )
+
+findMarkersCombinatorial(
+  seu_spleen_nk,
+  combVar = "Disease_Status",
+  features = c("GZMB", "KLRB1")
+) %>%
+  select(-p_val_adj)
 
 ################################################################################
 # Final layout and plot all
