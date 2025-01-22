@@ -4,5 +4,5 @@
 .Rprofile
 .Rproj.user/
 rds/
-outs/
+./outs/
 renv/
