@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -49,7 +49,7 @@ annotGenes <- read.csv("figures/sfig4_ordering/annot_genes_suppfig.csv")
 
 
 ################################################################################
-# S4A/B - dot plots!
+# %% S4A/B - dot plots!
 ################################################################################
 labellerAdt <- tsaCatalog$cleanName
 names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
@@ -86,7 +86,7 @@ figB <- figBBase +
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 4, 12), # a
@@ -95,16 +95,21 @@ layout <- c(
 
 p <- wrap_elements(plot = figA) +
   wrap_elements(plot = figB) +
-  plot_annotation(tag_levels = list(LETTERS[1:2])) +
+  plot_annotation(tag_levels = list(letters[1:2])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "sfig3_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 11,
-  gheight = 13)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig3_v3_final.pdf", width=11, height=13, family="sans")
+print(p)
+dev.off()
 
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "sfig3_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 11,
+#   gheight = 13)
+#

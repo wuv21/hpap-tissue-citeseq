@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -37,7 +37,7 @@ seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D")
 parentDir <- "figures/greg_flow_data"
 
 ################################################################################
-# A - cd4 Tn differences in pLN
+# %% A - cd4 Tn differences in pLN
 ################################################################################
 dfDiseaseScales <- processGregFlowData(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
@@ -71,7 +71,7 @@ figA <- dfDiseaseScales %>%
 
 
 ################################################################################
-# B - cd8 Tn differences in pLN
+# %% B - cd8 Tn differences in pLN
 ################################################################################
 figB <- dfDiseaseScales %>%
   filter(LN_type == "pLN" & cd == "CD8") %>%
@@ -103,7 +103,7 @@ figB <- dfDiseaseScales %>%
 
 
 ################################################################################
-# Figure C: Heatmap of top 10 genes in module 15
+# %% Figure C: Heatmap of top 10 genes in module 15
 ################################################################################
 wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
 seuWcgna <- tryCatch(
@@ -204,7 +204,7 @@ fig_module14 <- Heatmap(
 
 
 ################################################################################
-# Fig D: frequency of naive CD4 in citeseq
+# %% Fig D: frequency of naive CD4 in citeseq
 ################################################################################
 # frequency of naive cd4 cells in pln only
 cd4Clusters <- levels(manualClusterOrder)[grepl("^CD4", levels(manualClusterOrder))]
@@ -466,3 +466,5 @@ saveFinalFigure(
   addTimestamp = TRUE,
   gwidth = 8,
   gheight = 6)
+# %%
+

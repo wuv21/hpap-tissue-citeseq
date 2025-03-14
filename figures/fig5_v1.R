@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -45,7 +45,7 @@ seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D")
 parentDir <- "figures/greg_flow_data"
 
 ################################################################################
-# A - cd8 CD25+ Tn differences in pLN
+# %% A - cd8 CD25+ Tn differences in pLN
 ################################################################################
 dfDiseaseScales <- processGregFlowData(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
@@ -78,7 +78,7 @@ figA <- dfDiseaseScales %>%
     axis.title.y = element_text(size = 6, color = "#000000"))
 
 ################################################################################
-# B - cd8 CD38+ Tn differences in pLN
+# %% B - cd8 CD38+ Tn differences in pLN
 ################################################################################
 figB <- dfDiseaseScales %>%
   filter(LN_type == "pLN" & cd == "CD8") %>%
@@ -110,7 +110,7 @@ figB <- dfDiseaseScales %>%
 
 
 ################################################################################
-# ??? - effector gene list heatmap
+# %% effector gene list heatmap
 ################################################################################
 effectorGeneList <- read.csv("figures/fig5_gene_lists/CD8_genelist.csv")
 
@@ -179,7 +179,7 @@ fig_effGeneList <- Heatmap(
 )
 
 ################################################################################
-# ??? - cxcr3, tox, gzmk investigation
+# %% - cxcr3, tox, gzmk investigation
 ################################################################################
 seu_TemTemra <- subset(seu_eff, subset = manualAnnot == "CD8 Tcm/Tem/Temra")
 
@@ -494,7 +494,7 @@ fig_cPosTNeg_rna <- Heatmap(
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 4, 6), # a flow 1
@@ -508,7 +508,7 @@ layout <- c(
 )
 
 p <- wrap_elements(full = figA / figB &
-    plot_annotation(tag_levels = list(c("A", "B"))) &
+    plot_annotation(tag_levels = list(c("a", "b"))) &
     plotTagTheme, ignore_tag = TRUE) +
   wrap_elements(full = grid.grabExpr(
     draw(fig_effGeneList,
@@ -549,16 +549,23 @@ p <- wrap_elements(full = figA / figB &
       background = "transparent",
       padding = unit(c(0.5,1.5,1,0.5), "lines"))
   ), clip = FALSE) +
-  plot_annotation(tag_levels = list(LETTERS[3:9])) +
+  plot_annotation(tag_levels = list(letters[3:9])) +
   plot_layout(design = layout) &
   plotTagTheme
 
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig5_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8.5,
-  gheight = 8.5)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig5_v3_final.pdf", width=8.5, height=8.5, family="sans")
+print(p)
+dev.off()
+
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "/srv/http/betts/hpap/final_figures",
+#   fn = "fig5_v3_final",
+#   devices = c("Cairo"),
+#   addTimestamp = FALSE,
+#   gwidth = 8.5,
+#   gheight = 8.5)
+# %%
+

@@ -1,6 +1,7 @@
 # note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
+# %%
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
 source("scripts/deg.R")
@@ -18,7 +19,7 @@ set.seed(42)
 parentDir <- "figures/greg_flow_data"
 
 ################################################################################
-# A - cd4 differences in cd25 expression in pLN
+# %% A - cd4 differences in cd25 expression in pLN
 ################################################################################
 dfDiseaseScales <- processGregFlowData(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
@@ -51,7 +52,7 @@ figA <- dfDiseaseScales %>%
 
 
 ################################################################################
-# B - cd4 differences in Treg-like
+# %% B - cd4 differences in Treg-like
 ################################################################################
 figB <- dfDiseaseScales %>%
   filter(LN_type == "pLN" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
@@ -83,7 +84,7 @@ figB <- dfDiseaseScales %>%
 
 
 ################################################################################
-# D - heatmap for treg cluster
+# %% D - heatmap for treg cluster
 ################################################################################
 tsaCatalog <- readRDS("rds/tsa_catalog.rds")
 
@@ -109,7 +110,7 @@ seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D")
 
 
 ################################################################################
-# generate results for each cluster between nd vs t1d
+# %% generate results for each cluster between nd vs t1d
 ################################################################################
 commonGenesFn <- "outs/csv/pLN_findAllMarkers_byManualAnnot_inMoreThan12Clusters.csv"
 if (!file.exists(commonGenesFn)) {
@@ -166,7 +167,7 @@ if (!file.exists(commonGenesFn)) {
 commonGenesByDisease <- split(commonGenes, commonGenes$cluster)
 
 ################################################################################
-# actual figure d
+# %% actual figure d
 ################################################################################
 seu_pln_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "pLN")
 treg_gene_list <- read.csv("figures/fig3_gene_lists/fig3_treg_genelist.csv", header = TRUE, sep = ",")$gene
@@ -192,6 +193,7 @@ treg_deg <- findMarkersCombinatorial(
   logfc.threshold	= 0,
   min.pct = 0.05,
 )
+write.csv(treg_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/fig3_treg_deg.csv", row.names = FALSE, quote = FALSE)
 
 treg_deg_stats <- treg_deg %>%
   mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
@@ -202,6 +204,8 @@ treg_deg_stats <- treg_deg %>%
     matches = paste0(matchup, collapse = " / ")) %>%
   mutate(gene = factor(gene, levels = rownames(treg_avg_exp_rna))) %>%
   arrange(gene)
+
+treg_deg_stats
 
 fig_treg <- Heatmap(
   matrix = t(scale(t(treg_avg_exp_rna))),
@@ -236,7 +240,7 @@ fig_treg <- Heatmap(
 
 
 ################################################################################
-# NEW: pca
+# %% NEW: pca
 ################################################################################
 treg_avg_exp_by_sample <- AverageExpression(
   object = seu_pln_treg,
@@ -289,10 +293,12 @@ ggplot(scores, aes(x = PC1, y = PC2))+
 
 
 ################################################################################
-# in CD4 Tcm/treg subset, what are differential markers that are expressed?
+# %% in CD4 Tcm/treg subset, what are differential markers that are expressed?
 ################################################################################
 seu_pln_treg_foxp3 <- subset(seu_pln_treg, subset = FOXP3 > 0.5)
 foxp3_diseaseStatus_deg <- findMarkersCombinatorial(seu_pln_treg_foxp3, "Disease_Status")
+
+write.csv(foxp3_diseaseStatus_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/fig3_foxp3_diseaseStatus_deg.csv", row.names = FALSE, quote = FALSE)
 
 figE <- plotCombinatorialDEGLollipop(
   foxp3_diseaseStatus_deg %>% filter(!(gene %in% commonGenesByDisease$`ND`$gene) &
@@ -327,7 +333,7 @@ figE <- plotCombinatorialDEGLollipop(
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 2, 6), # a
@@ -348,16 +354,23 @@ p <- wrap_elements(plot = figA) +
       padding = unit(c(0.5,1.5,0.5,0.5), "lines"))
   ), clip = FALSE) +
   wrap_elements(full = figE) +
-  plot_annotation(tag_levels = list(LETTERS[1:5])) +
+  plot_annotation(tag_levels = list(letters[1:5])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig3_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 6.5,
-  gheight = 6)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig3_v3_final.pdf", width=6.5, height=6, family="sans")
+print(p)
+dev.off()
+
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "/srv/http/betts/hpap/final_figures",
+#   fn = "fig3_v3_final",
+#   devices = c("Cairo"),
+#   addTimestamp = TRUE,
+#   gwidth = 6.5,
+#   gheight = 6)
   
+# %%
+

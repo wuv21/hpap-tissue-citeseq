@@ -26,7 +26,7 @@ COLORS <- list(
 )
 
 plotTagTheme <- theme(
-  plot.tag = element_text(size = 10, face = "plain", family = "sans"))
+  plot.tag = element_text(size = 9, face = "plain", family = "sans"))
 
 subplotTheme <- theme(
   plot.title.position = "plot",
@@ -173,7 +173,12 @@ saveFinalFigure <- function(
     } else if (d == "Cairo") {
       # ggsave(gfn, plot = plot, dpi = "retina", device = Cairo::Cairo, width = gwidth, height = gheight, units = "in")
       # Cairo(width=gwidth, height=gheight, file=gfn, dpi=320, type="pdf", units="in", family="sans")
-      CairoPDF(width=gwidth, height=gheight, file=gfn, family="sans")
+      Cairo::CairoPDF(width=gwidth, 
+                      height=gheight, 
+                      file=gfn, 
+                      family="sans",
+                      pointsize=1
+      )
       print(plot)
       dev.off()
     } else {

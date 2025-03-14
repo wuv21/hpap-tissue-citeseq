@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -14,7 +14,7 @@ set.seed(42)
 parentDir <- "figures/greg_flow_data"
 
 ################################################################################
-# A - cd4 differences in cd25 expression in mesln
+# %% A - cd4 differences in cd25 expression in mesln
 ################################################################################
 dfDiseaseScales <- processGregFlowData(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
@@ -48,7 +48,7 @@ figA <- dfDiseaseScales %>%
   facet_grid(cols = vars(tpop), switch = "y")
 
 ################################################################################
-# b - cd4 differences in cd25 expression in spleen
+# %% b - cd4 differences in cd25 expression in spleen
 ################################################################################
 figB <- dfDiseaseScales %>%
   filter(LN_type == "Spleen" & cd == "CD4") %>%
@@ -80,7 +80,7 @@ figB <- dfDiseaseScales %>%
   facet_grid(cols = vars(tpop), switch = "y")
 
 ################################################################################
-# C - cd4 differences in Treg-like mesLN
+# %% C - cd4 differences in Treg-like mesLN
 ################################################################################
 figC <- dfDiseaseScales %>%
   filter(LN_type == "mLN" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
@@ -111,7 +111,7 @@ figC <- dfDiseaseScales %>%
     axis.title.y = element_text(size = 6))
 
 ################################################################################
-# D - cd4 differences in Treg-like spleen
+# %% D - cd4 differences in Treg-like spleen
 ################################################################################
 figD <- dfDiseaseScales %>%
   filter(LN_type == "Spleen" & cd == "CD4" & metric == "CD4 Mem Tregs") %>%
@@ -144,7 +144,7 @@ figD <- dfDiseaseScales %>%
 
 
 ################################################################################
-# E - citeseq treg/tcm phenotypes for mLN
+# %% E - citeseq treg/tcm phenotypes for mLN
 ################################################################################
 tsaCatalog <- readRDS("rds/tsa_catalog.rds")
 
@@ -165,6 +165,8 @@ seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D")
 
 seu_mesLN_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "mesLN")
 treg_gene_list <- read.csv("figures/fig3_gene_lists/fig3_treg_genelist.csv", header = TRUE, sep = ",")$gene
+
+# %%
 
 treg_mesln_avg_exp <- AverageExpression(
   object = seu_mesLN_treg,
@@ -187,6 +189,9 @@ treg_mesln_deg <- findMarkersCombinatorial(
   logfc.threshold	= 0,
   min.pct = 0.05,
 )
+
+write.csv(treg_mesln_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_treg_mesln_deg.csv", row.names = FALSE, quote = FALSE)
+
 
 treg_mesln_deg_stats <- treg_mesln_deg %>%
   mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
@@ -230,7 +235,7 @@ fig_treg_mesln <- Heatmap(
 
 
 ################################################################################
-# F - citeseq treg/tcm phenotypes for spleen
+# %% F - citeseq treg/tcm phenotypes for spleen
 ################################################################################
 seu_spleen_treg <- subset(seu, subset = manualAnnot == "CD4 Tcm/Treg" & TissueCondensed == "Spleen")
 
@@ -255,6 +260,8 @@ treg_spleen_deg <- findMarkersCombinatorial(
   logfc.threshold	= 0,
   min.pct = 0.05,
 )
+
+write.csv(treg_spleen_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_treg_spleen_deg.csv", row.names = FALSE, quote = FALSE)
 
 treg_spleen_deg_stats <- treg_spleen_deg %>%
   mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
@@ -297,7 +304,7 @@ fig_treg_spleen <- Heatmap(
 )
 
 ################################################################################
-# G - flow cd4 tn for mesln
+# %% G - flow cd4 tn for mesln
 ################################################################################
 figG <- dfDiseaseScales %>%
   filter(LN_type == "mLN" & cd == "CD4") %>%
@@ -329,7 +336,7 @@ figG <- dfDiseaseScales %>%
 
 
 ################################################################################
-# H - flow cd4 tn for spleen
+# %% H - flow cd4 tn for spleen
 ################################################################################
 figH <- dfDiseaseScales %>%
   filter(LN_type == "Spleen" & cd == "CD4") %>%
@@ -361,7 +368,7 @@ figH <- dfDiseaseScales %>%
 
 
 ################################################################################
-# I - cd8 CD25+ Tn differences in mln
+# %% I - cd8 CD25+ Tn differences in mln
 ################################################################################
 figI <- dfDiseaseScales %>%
   filter(LN_type == "mLN" & cd == "CD8") %>%
@@ -396,7 +403,7 @@ figI <- dfDiseaseScales %>%
 
 
 ################################################################################
-# J - cd8 CD25+ Tn differences in mln
+# %% J - cd8 CD25+ Tn differences in mln
 ################################################################################
 figJ <- dfDiseaseScales %>%
   filter(LN_type == "Spleen" & cd == "CD8") %>%
@@ -431,7 +438,7 @@ figJ <- dfDiseaseScales %>%
 
 
 ################################################################################
-# K - cd8 cd38+ Tn differences in mln
+# %% K - cd8 cd38+ Tn differences in mln
 ################################################################################
 figK <- dfDiseaseScales %>%
   filter(LN_type == "mLN" & cd == "CD8") %>%
@@ -466,7 +473,7 @@ figK <- dfDiseaseScales %>%
 
 
 ################################################################################
-# L - cd8 CD38+ Tn differences in mln
+# %% L - cd8 CD38+ Tn differences in mln
 ################################################################################
 figL <- dfDiseaseScales %>%
   filter(LN_type == "Spleen" & cd == "CD8") %>%
@@ -501,7 +508,7 @@ figL <- dfDiseaseScales %>%
 
 
 ################################################################################
-# M - cxcr3, tox, gzmk differences in mln
+# %% M - cxcr3, tox, gzmk differences in mln
 ################################################################################
 seu_mesln_TemTemra <- subset(seu, subset = manualAnnot == "CD8 Tem/Temra" & TissueCondensed == "mesLN")
 fig_vlnCTG_mesln <- data.frame(
@@ -533,16 +540,17 @@ fig_vlnCTG_mesln <- data.frame(
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000"),
   )
 
-findMarkersCombinatorial(
+figM_deg = findMarkersCombinatorial(
   seu_mesln_TemTemra,
   combVar = "Disease_Status",
   features = c("CXCR3", "TOX")
 ) %>%
-  select(-p_val_adj)
+  select(-p_val_adj) %>%
+  mutate(figure = "sfig5_M")
 
 
 ################################################################################
-# N - cxcr3, tox, gzmk differences in spleen
+# %% N - cxcr3, tox, gzmk differences in spleen
 ################################################################################
 seu_spleen_TemTemra <- subset(seu, subset = manualAnnot == "CD8 Tem/Temra" & TissueCondensed == "Spleen")
 fig_vlnCTG_spleen <- data.frame(
@@ -574,15 +582,16 @@ fig_vlnCTG_spleen <- data.frame(
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000")
   )
 
-findMarkersCombinatorial(
+figN_deg = findMarkersCombinatorial(
   seu_spleen_TemTemra,
   combVar = "Disease_Status",
   features = c("CXCR3", "TOX")
 ) %>%
-  select(-p_val_adj)
+  select(-p_val_adj) %>%
+  mutate(figure = "sfig5_N")
 
 ################################################################################
-# O - gzmb klrb1 in nk in mesln
+# %% O - gzmb klrb1 in nk in mesln
 ################################################################################
 seu_mesln_nk <- subset(seu, subset = manualAnnot %in% c("NK", "NK/ILC") & TissueCondensed == "mesLN")
 fig_vlnGK_mesln <- data.frame(
@@ -612,15 +621,16 @@ fig_vlnGK_mesln <- data.frame(
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000")
   )
 
-findMarkersCombinatorial(
+figO_deg = findMarkersCombinatorial(
   seu_mesln_nk,
   combVar = "Disease_Status",
   features = c("GZMB", "KLRB1")
 ) %>%
-  select(-p_val_adj)
+  select(-p_val_adj) %>%
+  mutate(figure = "sfig5_O")
 
 ################################################################################
-# P - gzmb klrb1 in nk in spleen
+# %% P - gzmb klrb1 in nk in spleen
 ################################################################################
 seu_spleen_nk <- subset(seu, subset = manualAnnot %in% c("NK", "NK/ILC") & TissueCondensed == "Spleen")
 fig_vlnGK_spleen <- data.frame(
@@ -650,15 +660,20 @@ fig_vlnGK_spleen <- data.frame(
     axis.text.x = element_text(size = 6, angle = 45, vjust = 1, hjust = 1, color = "#000000")
   )
 
-findMarkersCombinatorial(
+figP_deg = findMarkersCombinatorial(
   seu_spleen_nk,
   combVar = "Disease_Status",
   features = c("GZMB", "KLRB1")
 ) %>%
-  select(-p_val_adj)
+  select(-p_val_adj) %>%
+  mutate(figure = "sfig5_P")
+
+
+
+write.csv(bind_rows(figM_deg, figN_deg, figO_deg, figP_deg), file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_MNOP_deg.csv", row.names = FALSE, quote = FALSE)
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 2, 6), # a
@@ -711,15 +726,20 @@ p <- wrap_elements(plot = figA) +
   wrap_elements(plot = fig_vlnCTG_spleen) +
   wrap_elements(plot = fig_vlnGK_mesln) +
   wrap_elements(plot = fig_vlnGK_spleen) +
-  plot_annotation(tag_levels = list(LETTERS[1:15])) +
+  plot_annotation(tag_levels = list(letters[1:15])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "sfig5_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8,
-  gheight = 11)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig5_v3_final.pdf", width=8, height=11, family="sans")
+print(p)
+dev.off()
+
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "sfig5_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 8,
+#   gheight = 11)

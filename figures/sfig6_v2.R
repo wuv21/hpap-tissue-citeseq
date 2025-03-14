@@ -1,5 +1,5 @@
-# note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# %% note that this code is written to be run from the project base directory
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -69,7 +69,7 @@ seu$Disease_Status <- factor(seu$Disease_Status, levels = c("ND", "AAb+", "T1D")
 
 
 ################################################################################
-# S7A - naive t cell adt.
+# %% S7A - naive t cell adt.
 ################################################################################
 labellerAdt <- tsaCatalog$cleanName
 names(labellerAdt) <- paste0("adt_", tsaCatalog$DNA_ID)
@@ -129,16 +129,21 @@ tmp <- lapply(tmp, function(x) {
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3))
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "sfig6_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8.5,
-  gheight = 7)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig6_v3_final.pdf", width=8.5, height=7, family="sans")
+print(p)
+dev.off()
 
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "sfig6_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 8.5,
+#   gheight = 7)
+#

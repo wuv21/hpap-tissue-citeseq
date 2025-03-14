@@ -15,8 +15,26 @@ set.seed(42)
 
 parentDir <- "figures/greg_flow_data"
 
+seu <- tryCatch(
+  {
+    print(head(seu$TissueCondensed))
+    message("Seurat object already exists")
+    return(seu)
+  },
+  error = function(cond) {
+    message("Seurat object doesn't exist. Loading now.")
+    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
+    
+    return(tmp)
+})
+
+seu_env = rlang::env()
+seu_env$seu = seu
+rlang::env_print(seu_env)
+attach(seu_env)
+seu
 ################################################################################
-# A and B - flow umaps from omiq
+# %% A and B - flow umaps from omiq
 # code is modified from @Greg
 ################################################################################
 omiq_umap_coordinate_lnmc <- read.csv(paste0(parentDir, "/OMIQ_HPAP099_Panc-Tail_CD45+.csv"))
@@ -29,7 +47,7 @@ legendTheme <- theme(
   legend.key.size = unit(0.1, 'lines'),
   legend.spacing.x = unit(3, "points"),
   legend.text = element_text(margin = margin(r = 12, unit = "pt"), size = 4.5),
-  legend.title = element_text(size = 8, color = "#000000", hjust = 0))
+  legend.title = element_text(size = 6, color = "#000000", hjust = 0))
 
 figA <- omiq_umap_coordinate_lnmc %>%
   ggplot(aes(x = umap_1, y = umap_2, color = OmiqFilter)) +
@@ -57,7 +75,7 @@ ab_legend <- ggpubr::as_ggplot(get_legend(figA +
     guides(colour = guide_legend(
       override.aes = list(size = 2.5, alpha = 1),
       nrow = 10,
-      title = "Combined legend for (A) and (B)",
+      title = "Cell Type",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -77,7 +95,7 @@ figB <- figB +
 
 
 ################################################################################
-# C - lineage data heatmap
+# %% C - lineage data heatmap
 # code is modified from @Greg
 ################################################################################
 dfLineageFilter <- readRDS(paste0(parentDir, "/rds/dfLineageFilter.rds"))
@@ -92,6 +110,7 @@ LineageList <- c("Eosinophils", "Neutrophils", "B cells","ILCs",
   "CD8 Tn", "CD8 Tnl", "CD4+ T cells", "CD4 Tcm", "CD4 Tem", "CD4 Temra",
   "CD4 Tn", "CD4 Tnl", "CD4 Mem Tregs", "CD4 Mem gcTfh", "CD4 Mem mTfh")
 LinTissueOrder <- c("Spleen", "Head pLN", "Body pLN", "Tail pLN", "SMA mLN", "MES mLN")
+DisStatusOrder = c("ND", "AAb+", "T1D")
 SampleVariablesLin <- c("HPAP Donor", "Tissue")
 
 dfTotalLineageHeatmap <- dfHeatmapNorm %>%
@@ -110,6 +129,19 @@ dfTotalLineageHeatmap <- dplyr::select(dfTotalLineageHeatmap, "Eosinophils":ncol
 dfTotalLineageHeatmap <- t(dfTotalLineageHeatmap)
 
 col_fun_LineageHM <- circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red")) #set maxima at 5th and 95th percentiles
+tissueLegend = ComplexHeatmap::Legend(
+    title = "Tissue",
+    at = LinTissueOrder,
+    labels = LinTissueOrder,
+    nrow = 6,
+    legend_gp = gpar(fill= COLORS$tissue_detailed),
+    legend_height = unit(6, "mm"),
+    legend_width = unit(0.5, "mm"),
+    labels_gp = gpar(fontsize = 5),
+    grid_width = unit(1, "mm"),
+    grid_height = unit(1, "mm"),
+    title_gp = gpar(fontsize = 6, fontface = "plain")
+)
 LinAnn <- HeatmapAnnotation(
   df = dfLinHeatmapMetadata,
   which = "col",
@@ -117,8 +149,9 @@ LinAnn <- HeatmapAnnotation(
   simple_anno_size = unit(5, "points"),
   height = unit(5, "points"),
   annotation_name_gp = gpar(fontsize = 8),
+  show_legend = TRUE,
   annotation_legend_param = list(
-    title = "Tissue Legend for (C) and (D)",
+    title = "Tissue",
     at = LinTissueOrder,
     labels = LinTissueOrder,
     nrow = 1,
@@ -127,9 +160,21 @@ LinAnn <- HeatmapAnnotation(
     labels_gp = gpar(fontsize = 5),
     grid_width = unit(1, "mm"),
     grid_height = unit(1, "mm"),
-    title_gp = gpar(fontsize = 8, fontface = "plain")
-  ))
+    title_gp = gpar(fontsize = 6, fontface = "plain")
+  )
+)
 
+# figCheatmapLegend = ComplexHeatmap::Legend(
+#     title = "Z-score",
+#     col_fun = col_fun_LineageHM,
+#     direction = "horizontal",
+#     title_position = "topcenter",
+#     labels_gp = gpar(fontsize = 5),
+#     title_gp = gpar(fontsize = 6, fontface = "plain"),
+#     grid_height = unit(1.5, "mm"),
+#     legend_height = unit(2, "mm"),
+#     legend_width = unit(10, "mm")
+# )
 figC <- Heatmap(
   dfTotalLineageHeatmap,
   name = "Z-score",
@@ -143,18 +188,21 @@ figC <- Heatmap(
   row_names_gp = gpar(fontsize = 6),
   row_dend_width = unit(3, "points"),
   column_dend_height = unit(12, "points"),
+  show_heatmap_legend = TRUE,
   heatmap_legend_param = list(
     direction = "horizontal",
     title_position = "topleft",
     labels_gp = gpar(fontsize = 5),
-    title_gp = gpar(fontsize = 8, fontface = "plain"),
+    title_gp = gpar(fontsize = 6, fontface = "plain"),
     grid_height = unit(1.5, "mm"),
     legend_height = unit(2, "mm"),
-    legend_width = unit(10, "mm")),
+    legend_width = unit(10, "mm")
+    )
   )
 
+
 ################################################################################
-# D - Tissue Distribution -
+# %% D - Tissue Distribution -
 # Generate PCA-compatible dataframe and metadata for entire dataset
 # code is modified from @Greg
 ################################################################################
@@ -189,9 +237,20 @@ figD <- dfTotalLinPCA %>%
   theme_classic() +
   theme(aspect.ratio = 1) +
   subplotTheme +
-  umapPlotThemeNoLeg + 
   theme(
-    plot.margin = margin(0,0,0,0))
+    plot.margin = margin(0,0,0,0)
+  )
+
+d_legend = ggpubr::as_ggplot(get_legend(figD + 
+    guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), ncol=1,
+      title = NULL,
+      title.position = "left",
+      title.hjust = 0)) +
+    legendTheme +
+    theme(legend.box.margin = margin(0,0,-10,-10))))
+
+figD = figD + 
+  umapPlotThemeNoLeg
 
 dfTotalLinBiplot <- TotalLinPCA$rotation %>%
   as.data.frame() %>%
@@ -225,21 +284,8 @@ figE <- dfTotalLinBiplot %>%
     axis.title.y = element_text(color = "#FFFFFF00"))
 
 ################################################################################
-# Figures F-H
+# %% Figures F-H
 ################################################################################
-seu <- tryCatch(
-  {
-    print(head(seu$TissueCondensed))
-    message("Seurat object already exists")
-    return(seu)
-  },
-  error = function(cond) {
-    message("Seurat object doesn't exist. Loading now.")
-    tmp <- readRDS("outs/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds")
-    
-    return(tmp)
-})
-
 
 # one of the clusters has an extra space so just removing it here
 seu$manualAnnot <- stringr::str_trim(seu$manualAnnot)
@@ -259,17 +305,18 @@ seu$TissueCondensed <- ifelse(seu$TissueCondensed == "mesLN", "mLN", seu$TissueC
 
 figF <- DimPlot(seu, reduction = "rna.umap", shuffle = TRUE, group.by = "TissueCondensed") +
   scale_color_manual(values = COLORS[["tissue"]]) +
-  labs(title = "Tissue")
+  labs(title = "Tissue (e)")
 figG <- DimPlot(seu, reduction = "rna.umap", group.by = "Disease_Status", shuffle = TRUE) +
   scale_color_manual(values = COLORS[["disease"]], limits = c("ND", "AAb+", "T1D")) +
-  labs(title = "Disease Status")
+  labs(title = "Disease Status (f)")
 figH <- DimPlot(seu, reduction = "rna.umap", group.by = "manualAnnot") +
   scale_color_discrete(limits = levels(manualClusterOrder)) +
-  labs(title = "Cell Type")
+  labs(title = "Cell Type (g)")
 
 f_legend <- ggpubr::as_ggplot(get_legend(figF + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Legend for (F)",
+      # title = "Legend for (F)",
+      title = "Tissue",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -277,7 +324,7 @@ f_legend <- ggpubr::as_ggplot(get_legend(figF +
 
 g_legend <- ggpubr::as_ggplot(get_legend(figG + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Legend for (G)",
+      title = "Disease Status",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -285,7 +332,7 @@ g_legend <- ggpubr::as_ggplot(get_legend(figG +
 
 h_legend <- ggpubr::as_ggplot(get_legend(figH + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 15,
-      title = "Legend for (H)",
+      title = "Cell Type",
       title.position = "top",
       title.hjust = 0))  +
     legendTheme))
@@ -318,7 +365,7 @@ figFGHLegend[[2]] <- figFGHLegend[[2]] +
 
 
 ################################################################################
-# Figure I
+# %% Figure I
 ################################################################################
 frequencyDf <- data.frame(
   cluster = seu$manualAnnot,
@@ -341,16 +388,25 @@ frequencyPlotTheme <- list(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     panel.border = element_rect(fill = NULL, colour = "#000000", size = 0.25)
-  ),
-  guides(fill = "none",
-    shape = guide_legend(
-      override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Tissue",
-      title.position = "top",
-      title.hjust = 0.5))
+  )
+  # guides(
+  #   fill = guide_legend(
+  #     override.aes = list(size = 2.5, alpha = 1, color="#FFFFFF", shape=21), nrow = 1,
+  #     title = "Disease Status",
+  #     title.position = "top",
+  #     title.hjust = 0.5),
+  #   shape = guide_legend(
+  #     override.aes = list(size = 2.5, alpha = 1), nrow = 1,
+  #     title = "Tissue",
+  #     title.position = "top",
+  #     title.hjust = 0.5)
+  # )
 )
 
 # number of cells in each cluster
+SHAPES = c(21:23)
+names(SHAPES)=c("pLN", "mLN", "Spleen")
+SHAPES
 figI <- frequencyDf %>%
   group_by(cluster, tissue, diseaseStatus) %>%
   summarize(nCells = n()) %>%
@@ -358,42 +414,86 @@ figI <- frequencyDf %>%
   geom_point(color = "#000000", alpha = 0.95, size = 0.75, position = position_dodge(width = 0.75)) +
   theme(legend.position = "bottom") +
   scale_fill_manual(values = COLORS[["disease"]]) +
+  # scale_shape_manual(values = SHAPES) +
   scale_shape_manual(values = c(21:23)) +
   labs(y = "Cell count")+
   subplotTheme +
   frequencyPlotTheme +
   legendTheme +
+  guides(shape="none", fill="none", color="none")+
   theme(
     plot.margin = margin(b = 15),
     plot.background = element_rect(fill = "#ffffff00", color = "#ffffff00"),
     legend.justification = "center", 
-    legend.box.margin = margin(-20,0,-20,0),
+    legend.box.margin = margin(-10,0,-10,0),
     legend.title = element_blank())
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
-  area(t = 1, l = 1, b = 2, r = 8), #AB
-  area(t = 1, l = 9, b = 2, r = 11), #ab legend
-  area(t = 1, l = 12, b = 4, r = 20), #C
-  area(t = 3, l = 1, b = 4, r = 11), #DE
-  area(t = 5, l = 1, b = 6, r = 12), #fgh
-  area(t = 5, l = 13, b = 6, r = 20), #fgh legend
-  area(t = 7, l = 1, b = 8, r = 20) #i
+  patchwork::area(t = 1, l = 1, b = 2, r = 8), #AB
+  patchwork::area(t = 1, l = 9, b = 2, r = 11), #ab legend
+  patchwork::area(t = 1, l = 12, b = 4, r = 20), #C
+
+  # patchwork::area(t = 3, l = 1, b = 4, r = 11), #DE
+  patchwork::area(t = 3, l = 1, b = 4, r = 5), #NewC
+  patchwork::area(t = 3, l = 6, b = 4, r = 7), #NewC legend
+  patchwork::area(t = 3, l = 7, b = 4, r = 11), #NewD
+  patchwork::area(t = 5, l = 1, b = 6, r = 12), #fgh
+  patchwork::area(t = 5, l = 13, b = 6, r = 20), #fgh legend
+  patchwork::area(t = 7, l = 1, b = 8, r = 20) #i
 )
 
 figAB_final <- (figA + figB) +
-  plot_annotation(tag_levels = list(LETTERS[1:2])) &
+  plot_annotation(tag_levels = list(c("a", ""))) &
   plotTagTheme
 
-figDE_final <- (figD + figE) +
-  plot_annotation(tag_levels = list(LETTERS[4:5])) &
+figD_final = figD +
+  plot_annotation(tag_levels = list(c("c"))) &
   plotTagTheme
+
+figE_final = figE +
+  plot_annotation(tag_levels = list(c("d"))) &
+  plotTagTheme
+
+# figDE_final <- (figD + figE) +
+#   plot_annotation(tag_levels = list(c("c","d"))) &
+#   plotTagTheme
+# figDE_final
+
+# figDE_legends = grid.grabExpr(draw(ComplexHeatmap::packLegend(tissueLegend, figCheatmapLegend, direction="vertical")))
+# figD_legend = grid.grabExpr(draw(ComplexHeatmap::packLegend(tissueLegend, direction="vertical"), just="right"))
+
+figH_leg = ComplexHeatmap::Legend(
+    title = NULL,
+    at = c("pLN", "mLN", "Spleen", "ND", "AAb+", "T1D"),
+    labels = c("pLN", "mLN", "Spleen", "ND", "AAb+", "T1D"),
+    nrow = 1,
+    legend_gp = gpar(col = COLORS$tissue_detailed),
+    legend_height = unit(1, "mm"),
+    legend_width = unit(0.5, "mm"),
+    labels_gp = gpar(fontsize = 5),
+    grid_width = unit(2, "mm"),
+    grid_height = unit(1, "mm"),
+    title_gp = gpar(fontsize = 6, fontface = "plain"),
+    graphics = list(
+                    function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=21, size=unit(3,"mm")),
+                    function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=22, size=unit(3,"mm")),
+                    function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=23, size=unit(3,"mm")),
+                    function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["ND"], col=COLORS$disease["ND"])),
+                    function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["AAb+"], col=COLORS$disease["AAb+"])),
+                    function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["T1D"], col=COLORS$disease["T1D"]))
+    )
+)
 
 figFGH_final <- figFGH +
-  plot_annotation(tag_levels = list(LETTERS[6:8])) &
+  plot_annotation(tag_levels = list(c("e","f","g"))) &
   plotTagTheme
+
+figH_final = figI + 
+  grid.grabExpr(draw(figH_leg)) + 
+  plot_layout(ncol=1, heights=c(45,1))
 
 p <- wrap_elements(full = figAB_final, ignore_tag = TRUE) +
   wrap_elements(full = ab_legend, clip = FALSE, ignore_tag = TRUE) +
@@ -404,20 +504,67 @@ p <- wrap_elements(full = figAB_final, ignore_tag = TRUE) +
       background = "transparent",
       padding = unit(c(1, 3.5, 1.5, 1.5), "lines"),
       merge_legend = TRUE)), clip = FALSE) +
-  wrap_elements(full = figDE_final, ignore_tag = TRUE) +
+  wrap_elements(full = figD_final, ignore_tag = TRUE) +
+  wrap_elements(full = d_legend, ignore_tag=TRUE) +
+  wrap_elements(full = figE_final, ignore_tag = TRUE) +
   wrap_elements(full = figFGH_final, ignore_tag = TRUE) +
   wrap_elements(full = figFGHLegend, ignore_tag = TRUE, clip = FALSE) +
-  wrap_elements(full = figI + theme(plot.margin = margin(l = 7.5, t = 20, b = 40)), clip = FALSE, ) +
-  plot_annotation(tag_levels = list(c("C", "I"))) +
+  wrap_elements(full = figH_final, clip=FALSE)+
+  plot_annotation(tag_levels = list(c("b", "h"))) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig1_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8.5,
-  gheight = 8)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig1_v3_final.pdf", width=8.5, height=8, family="sans")
+print(p)
+dev.off()
+
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "/srv/http/betts/hpap/final_figures",
+#   fn = "fig1_v3_final",
+#   # devices = c("Cairo", "png", "pdf"),
+#   devices = c("pdf"),
+#   addTimestamp = FALSE,
+#   gwidth = 8.5,
+#   gheight = 8)
+#
+# %%
+
+pdf("/srv/http/betts/hpap/final_figures/leg.pdf", width=5, height=5)
+print(f_legend)
+# figH_leg = ComplexHeatmap::Legend(
+#     title = NULL,
+#     at = c("pLN", "mLN", "Spleen", "ND", "AAb+", "T1D"),
+#     labels = c("pLN", "mLN", "Spleen", "ND", "AAb+", "T1D"),
+#     nrow = 1,
+#     legend_gp = gpar(col = COLORS$tissue_detailed),
+#     legend_height = unit(1, "mm"),
+#     legend_width = unit(0.5, "mm"),
+#     labels_gp = gpar(fontsize = 5),
+#     grid_width = unit(2, "mm"),
+#     grid_height = unit(1, "mm"),
+#     title_gp = gpar(fontsize = 6, fontface = "plain"),
+#     graphics = list(
+#                     function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=21, size=unit(3,"mm")),
+#                     function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=22, size=unit(3,"mm")),
+#                     function(x,y,w,h) grid.points(x, y, gp=gpar(fill="#ffffff", col="#000000"), pch=23, size=unit(3,"mm")),
+#                     function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["ND"], col=COLORS$disease["ND"])),
+#                     function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["AAb+"], col=COLORS$disease["AAb+"])),
+#                     function(x,y,w,h) grid.rect(x, y, w*0.33, h, gp=gpar(fill=COLORS$disease["T1D"], col=COLORS$disease["T1D"]))
+#                     )
+# )
+# draw(leg)
+# COLORS$disease
+
+dev.off()
+
+# %%
+    graphics = lapply(1:length(LinTissueOrder), function(label) function(x,y,w,h) {
+                        grid.points(x,y,gp=gpar(col=unname(COLORS$tissue_detailed[label])),pch=16)
+    })
+label = "Spleen"
+unname(COLORS$tissue_detailed[label])
+
+# %%
 

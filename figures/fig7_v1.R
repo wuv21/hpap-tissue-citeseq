@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -75,7 +75,7 @@ grsHLAcorr <- function(Allpops, NApops, dfAllpops, dfNApops, disease_status_filt
 
 
 ################################################################################
-# A - hla grs score
+# %% A - hla grs score
 ################################################################################
 parentDir <- "figures/greg_flow_data"
 
@@ -146,7 +146,7 @@ dfGRSstatsPLN <- dfAllPopsFreqStatsGRSpln %>%
   rstatix::dunn_test(HLA_score ~ Disease_Status, p.adjust.method = "holm")
 
 ################################################################################
-# B - correlation 
+# %% B - correlation 
 ################################################################################
 dfAllPopsFreqStatsGRSplndummy <- dfAllPopsFreqStatsGRSpln %>%
   mutate(dummyDisease = case_when(Disease_Status == "ND" ~ 1,
@@ -246,7 +246,7 @@ hlaGRS_NDAAb <- dfGRShlaCorrStatsNDAAb %>%
   }
 
 ################################################################################
-# Figure CD/FG
+# %%Figure CD/FG
 ################################################################################
 GRSpops <- c("ND_AAb CD8_Tem_HLA-DR+_CD38+ CD8+_Tem_cells:_HLA-DR+_CD38+", "ND_AAb CD8_Tcm_HLA-DR+_CD38+ CD8+_Tcm_cells:_HLA-DR+_CD38+", "AAb_T1D B_cells_CD69+ B_cells:_CD69+", "AAb_T1D CD4_Temra_CD127-CD27+ CD4+_Temra:_CD127-_CD27-") #split by the sapce
 
@@ -284,7 +284,7 @@ HLAgrsGraphs <- lapply(GRSpops, function(x) {
 })
 
 ################################################################################
-# Figure E
+# %% Figure E
 ################################################################################
 hlaGRS_AAbT1D <- dfGRShlaCorrStatsAAbT1D %>%
   mutate(population = str_replace_all(population, "_", " ")) %>%
@@ -329,7 +329,7 @@ hlaGRS_AAbT1D <- dfGRShlaCorrStatsAAbT1D %>%
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 2, 2), # a
@@ -348,16 +348,22 @@ p <- wrap_elements(plot = HLAscoreDisease) +
   wrap_elements(plot = hlaGRS_AAbT1D) +
   wrap_elements(plot = HLAgrsGraphs[[3]]) +
   wrap_elements(plot = HLAgrsGraphs[[4]]) +
-  plot_annotation(tag_levels = list(LETTERS[1:length(layout)])) +
+  plot_annotation(tag_levels = list(letters[1:length(layout)])) +
   plot_layout(design = layout) &
   plotTagTheme
 
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig7_v3_final.pdf", width=8, height=4, family="sans")
+print(p)
+dev.off()
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig7_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8,
-  gheight = 4)
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "/srv/http/betts/hpap/final_figures",
+#   fn = "fig7_v3_final",
+#   devices = c("Cairo"),
+#   addTimestamp = FALSE,
+#   gwidth = 8,
+#   gheight = 4)
+# %%
+

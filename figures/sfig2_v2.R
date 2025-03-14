@@ -1,4 +1,4 @@
-# note that this code is written to be run from the project base directory
+# %% note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
@@ -14,7 +14,7 @@ set.seed(42)
 
 
 ################################################################################
-# A-F
+# %% A-F
 # modified code from @Greg
 ################################################################################
 dfLineageFilter <- readRDS("figures/greg_flow_data/rds/dfLineageFilter.rds")
@@ -67,7 +67,7 @@ LinPopsGraphs <- lapply(LinPops, function(l) {
 })
 
 ################################################################################
-# G
+# %% G
 # modified code from @Greg
 ################################################################################
 # PCA compatible dataframe for the entire dataset
@@ -127,7 +127,7 @@ TotalLinPCAplotln <- dfTotalLinPCAln %>%
 
 
 ################################################################################
-# H
+# %% H
 # modified code from @Greg
 ################################################################################
 dfPCAfilter <- dfPCA %>%
@@ -170,7 +170,7 @@ CD4PCAplot <- dfCD4PCA %>%
   pcaPlotTheme
 
 ################################################################################
-# I
+# %% I
 # modified code from @Greg
 ################################################################################
 LinTissueOrder2 <- c("Head pLN", "Body pLN", "Tail pLN", "SMA mLN", "MES mLN")
@@ -260,7 +260,7 @@ CD4Heatmap2 <- Heatmap(
 
 
 ################################################################################
-# # Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 2, 3),
@@ -291,16 +291,23 @@ p <- wrap_elements(plot = LinPopsGraphs[[3]]) +
       background = "transparent",
       padding = unit(c(0.5,1.5,0.5,0.5), "lines"))
   ), clip = FALSE) +
-  plot_annotation(tag_levels = list(LETTERS[1:9])) +
+  plot_annotation(tag_levels = list(letters[1:9])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "sfig2_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8,
-  gheight = 6)
+pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig2_v3_final.pdf", width=8, height=6, family="sans")
+print(p)
+dev.off()
 
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "sfig2_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 8,
+#   gheight = 6)
+#
+# # %%
+#
