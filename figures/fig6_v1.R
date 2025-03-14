@@ -111,8 +111,8 @@ write.table(fig6_de_stats, file="fig6_de_stats.csv", sep=",", quote=F, row.names
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   geom_bar(stat="identity", color = "black", lwd=0.15) +
   scale_fill_manual(values = COLORS[["pval-heatmap"]]) +
-  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.75, hjust=0, family="sans", fontface="bold")+
-  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.75, hjust=1, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.005, size = 1.0, hjust=0, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.005, size = 1.0, hjust=1, family="sans", fontface="bold")+
   scale_color_manual(values=c("ns" = "black", "*" = "black", "**" = "black", "***" = "white")) +
   geom_hline(yintercept = 0, color = "black") +
   guides(color="none") +
@@ -143,6 +143,10 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
         legend.title = element_blank(),
         axis.line.y = element_blank()
   )
+  ylims = c(min(sig_genes$avg_log2FC-0.01),max(sig_genes$avg_log2FC)+0.01)
+  ylims
+  figC = figC +
+    scale_y_continuous(limits=ylims, expand=c(0,0))
 
 #################################################################################
 # %% D/E - NK cells violin/boxes
@@ -334,6 +338,7 @@ pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig6_v3_final.pdf", width=3.7
 print(plot)
 dev.off()
 
+ylims
 # %%
 # saveFinalFigure(plot=plot,
 #                 # prefixDir = "figures/outs",
@@ -343,6 +348,12 @@ dev.off()
 #                 addTimestamp = FALSE,
 #                 gheight=5.50,
 #                 gwidth=3.75)
+
+# %%
+pdf("/srv/http/betts/hpap/final_figures/dotty.pdf", width=8.5, height=8.5)
+p=Seurat::DotPlot(seu, features = c("NR4A1", "NR4A2", "BCL2", "FOS", "JUN"), assay="RNA", group.by = "manualAnnot")
+print(p)
+dev.off()
 
 # %%
 

@@ -1,5 +1,5 @@
 # %% note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -187,7 +187,7 @@ p <- wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 4)) +
       background = "transparent",
       padding = unit(c(1, 3, 1, 4), "lines"))
   ), clip = FALSE)  +
-  plot_annotation(tag_levels = list(LETTERS[1:2])) +
+  plot_annotation(tag_levels = list(letters[1:2])) +
   plot_layout(design = layout) &
   plotTagTheme
 

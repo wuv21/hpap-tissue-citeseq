@@ -203,6 +203,8 @@ pValSymnum <- function(x, showNs = TRUE) {
   return(tmp)
 }
 
+# %%
+
 dfsigPopsDisease <- dfDiseasePoolStats %>%
   rename(tissue = secondSubset) %>%
   mutate(immune_pop = str_replace_all(immune_pop, "_", " ")) %>%
@@ -286,7 +288,7 @@ DiseaseAnn <- HeatmapAnnotation(
       title = "p-value",
       at = c("ns", "*", "**", "***"),
       labels = c("ns", "*", "**", "***"),
-      ncol = 2,
+      nrow = 2,
       title_position = "topcenter",
       grid_width = unit(0.1, "in"),
       grid_height = unit(0.1, "in"),
@@ -296,6 +298,7 @@ DiseaseAnn <- HeatmapAnnotation(
   )
 )
 
+# %% Fig A
 figA <- Heatmap(
   dfsigPopsHeatmapPlot,
   name = "Mean Z-score",
@@ -326,7 +329,7 @@ figA <- Heatmap(
 
 
 ################################################################################
-# load seurat object for downstream...
+# %% load seurat object for downstream...
 ################################################################################
 
 wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
@@ -360,7 +363,7 @@ manualClusterOrder <- factor(manualClusterOrder,
 
 
 ################################################################################
-# modules of interest
+# %% modules of interest
 ################################################################################
 
 # code taken and modified from PlotKMEs() in hdWGCNA
@@ -439,7 +442,7 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
 })
 
 ################################################################################
-# modules of interest heatmap
+# %% modules of interest heatmap
 ################################################################################
 seuWcgna <- ModuleTraitCorrelation(
   seuWcgna,
@@ -517,14 +520,14 @@ p <- wrap_elements(full = grid.grabExpr(
       padding = unit(c(1, 3, 1, 4), "lines")
     )
   ), clip = FALSE) +
-  plot_annotation(tag_levels = list(letters[1:3])) & theme(plot.tag = element_text(size = 7)) +
+  plot_annotation(tag_levels = list(letters[1:3])) +
   plot_layout(design = layout) &
   plotTagTheme
 
 pdf(
   file = "/srv/http/betts/hpap/final_figures/amsesk/pdf/fig2_v3_final.pdf",
   width = 7.5,
-  height = 7,
+  height = 5,
   family = "sans"
 )
 print(p)

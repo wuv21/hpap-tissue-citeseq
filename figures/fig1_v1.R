@@ -28,11 +28,6 @@ seu <- tryCatch(
     return(tmp)
 })
 
-seu_env = rlang::env()
-seu_env$seu = seu
-rlang::env_print(seu_env)
-attach(seu_env)
-seu
 ################################################################################
 # %% A and B - flow umaps from omiq
 # code is modified from @Greg
@@ -191,7 +186,7 @@ figC <- Heatmap(
   show_heatmap_legend = TRUE,
   heatmap_legend_param = list(
     direction = "horizontal",
-    title_position = "topleft",
+    title_position = "topcenter",
     labels_gp = gpar(fontsize = 5),
     title_gp = gpar(fontsize = 6, fontface = "plain"),
     grid_height = unit(1.5, "mm"),
@@ -243,8 +238,8 @@ figD <- dfTotalLinPCA %>%
 
 d_legend = ggpubr::as_ggplot(get_legend(figD + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), ncol=1,
-      title = NULL,
-      title.position = "left",
+      title = "Tissue",
+      title.position = "top",
       title.hjust = 0)) +
     legendTheme +
     theme(legend.box.margin = margin(0,0,-10,-10))))
@@ -305,18 +300,18 @@ seu$TissueCondensed <- ifelse(seu$TissueCondensed == "mesLN", "mLN", seu$TissueC
 
 figF <- DimPlot(seu, reduction = "rna.umap", shuffle = TRUE, group.by = "TissueCondensed") +
   scale_color_manual(values = COLORS[["tissue"]]) +
-  labs(title = "Tissue (e)")
+  labs(title = "Tissue")
 figG <- DimPlot(seu, reduction = "rna.umap", group.by = "Disease_Status", shuffle = TRUE) +
   scale_color_manual(values = COLORS[["disease"]], limits = c("ND", "AAb+", "T1D")) +
-  labs(title = "Disease Status (f)")
+  labs(title = "Disease Status")
 figH <- DimPlot(seu, reduction = "rna.umap", group.by = "manualAnnot") +
   scale_color_discrete(limits = levels(manualClusterOrder)) +
-  labs(title = "Cell Type (g)")
+  labs(title = "Cell Type")
 
 f_legend <- ggpubr::as_ggplot(get_legend(figF + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
       # title = "Legend for (F)",
-      title = "Tissue",
+      title = "Tissue (e)",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -324,7 +319,7 @@ f_legend <- ggpubr::as_ggplot(get_legend(figF +
 
 g_legend <- ggpubr::as_ggplot(get_legend(figG + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 1,
-      title = "Disease Status",
+      title = "Disease Status (f)",
       title.position = "top",
       title.hjust = 0)) +
     legendTheme +
@@ -332,7 +327,7 @@ g_legend <- ggpubr::as_ggplot(get_legend(figG +
 
 h_legend <- ggpubr::as_ggplot(get_legend(figH + 
     guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1), nrow = 15,
-      title = "Cell Type",
+      title = "Cell Type (g)",
       title.position = "top",
       title.hjust = 0))  +
     legendTheme))

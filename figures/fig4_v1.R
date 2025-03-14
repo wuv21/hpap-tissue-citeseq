@@ -454,17 +454,28 @@ p <- wrap_elements(plot = figA) +
   wrap_elements(full = fig_naiveGenesOfInterest & theme(plot.margin = margin(t = 8, b = 5, l = 5,))) +
   wrap_elements(plot = fig_cd4Degs) +
   wrap_elements(plot = fig_cd8Degs) +
-  plot_annotation(tag_levels = list(LETTERS[1:8])) +
+  plot_annotation(tag_levels = list(letters[1:8])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig4_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8,
-  gheight = 6)
+pdf(
+  file = "/srv/http/betts/hpap/final_figures/amsesk/pdf/fig4_v3_final.pdf",
+  width = 7.5,
+  height = 5,
+  family = "sans"
+)
+print(p)
+
+dev.off()
+
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "fig4_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 8,
+#   gheight = 6)
 # %%
 
