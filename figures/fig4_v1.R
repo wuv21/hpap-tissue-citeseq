@@ -247,7 +247,7 @@ fig_naiveCD4Freq <- naiveCD4Freq %>%
 
 
 ################################################################################
-# Fig E: frequency of naive CD8 in citeseq
+# %% Fig E: frequency of naive CD8 in citeseq
 ################################################################################
 # frequency of naive cd4 cells in pln only
 cd8Clusters <- levels(manualClusterOrder)[grepl("^CD8", levels(manualClusterOrder))]
@@ -272,7 +272,7 @@ fig_naiveCD8Freq <- naiveCD8Freq %>%
 
 
 ################################################################################
-# Fig F:
+# %% Fig F:
 # Make violin plots of TXK, FKBP5, ATM for the 4 
 # naive clusters (CD4 Naive #1, CD4 Naive #2, CD8 Naive #1, CD4 Naive #2)
 ################################################################################
@@ -300,7 +300,7 @@ fig_naiveGenesOfInterest <- Reduce('+', VlnPlot(
 
 
 ################################################################################
-# Fig G: cd4 degs
+# %% Fig G: cd4 degs
 ################################################################################
 
 seu_naiveT_pln$Disease_StatusWithManualAnnnot <- paste0(seu_naiveT_pln$Disease_Status, "_", seu_naiveT_pln$manualAnnot)
@@ -384,7 +384,7 @@ module14Deg_cd4Naive1 %>%
 
 
 ################################################################################
-# Fig H: cd8 degs
+# %% Fig H: cd8 degs
 ################################################################################
 module14Deg_cd8Naive1 <- FindMarkers(
   object = seu_naiveT_pln,
@@ -417,15 +417,37 @@ module14Deg_cd8Naive1 %>%
   filter(gene %in% naiveGenesOfInterest)
 
 
-findMarkersCombinatorial(
-  seuratObj = subset(seu_naiveT_pln, manualAnnot == "CD8 naive #2"),
-  combVar = "Disease_Status",
-  features = naiveGenesOfInterest
-) %>%
-  select(-p_val_adj)
+################################################################################
+# %% Generate pvalues for Fig4f
+################################################################################
+pvalues = list()
+naiveGenesOfInterest
+for (annot in c("CD4 naive #1", "CD4 naive #2", "CD8 naive #1", "CD8 naive #2")) {
+  ps = findMarkersCombinatorial(
+    seuratObj = subset(seu_naiveT_pln, manualAnnot == annot),
+    combVar = "Disease_Status",
+    features = module14Genes$gene_name,
+    logfc.threshold = 0.1,
+  ) %>%
+    select(-p_val_adj) %>%
+    filter(gene %in% naiveGenesOfInterest) %>%
+    mutate(cluster = annot) %>%
+    mutate(matchup = stringr::str_replace(matchup, "_vs_", "_")) %>%
+    mutate(matchup = stringr::str_replace(matchup, "[+]", "")) %>%
+    mutate(figthing = glue::glue("{gene} {cluster}")) 
+  pvalues[[annot]] =  ps
+}
+pvalues
+
+pvalues_out = do.call(bind_rows, pvalues) %>%
+  mutate(p_val_adj_all = p.adjust(p_val, method = "bonferroni")) %>%
+  arrange(figthing, matchup)
+
+pvalues_out
+write.table(pvalues_out, "/srv/http/betts/hpap/final_figures/amsesk/stats/fig4f_stats.csv", sep = ",", quote=FALSE, row.names=FALSE)
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 2, 3), # a
@@ -460,8 +482,8 @@ p <- wrap_elements(plot = figA) +
 
 pdf(
   file = "/srv/http/betts/hpap/final_figures/amsesk/pdf/fig4_v3_final.pdf",
-  width = 7.5,
-  height = 5,
+  width = 8,
+  height = 6,
   family = "sans"
 )
 print(p)

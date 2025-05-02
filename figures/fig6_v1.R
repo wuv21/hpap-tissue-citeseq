@@ -105,7 +105,7 @@ sig_genes
 compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),]
 fig6_de_stats = compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),c("gene", "avg_log2FC", "p_val_adj_all", "pct.1", "pct.2", "upregulated", "matchup")]
 fig6_de_stats
-write.table(fig6_de_stats, file="fig6_de_stats.csv", sep=",", quote=F, row.names=F)
+write.table(fig6_de_stats, file="/srv/http/betts/hpap/final_figures/amsesk/stats/fig6_de_stats.csv", sep=",", quote=F, row.names=F)
 
 # %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +

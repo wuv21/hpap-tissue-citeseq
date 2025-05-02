@@ -547,6 +547,7 @@ figM_deg = findMarkersCombinatorial(
 ) %>%
   select(-p_val_adj) %>%
   mutate(figure = "sfig5_M")
+figM_deg
 
 
 ################################################################################
@@ -589,6 +590,8 @@ figN_deg = findMarkersCombinatorial(
 ) %>%
   select(-p_val_adj) %>%
   mutate(figure = "sfig5_N")
+
+figN_deg %>% arrange(gene) %>% select(-p_val)
 
 ################################################################################
 # %% O - gzmb klrb1 in nk in mesln
