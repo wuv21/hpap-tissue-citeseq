@@ -1,7 +1,7 @@
 # note that this code is written to be run from the project base directory
 # renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
-
+# %%
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
 library(Seurat)
@@ -19,14 +19,17 @@ set.seed(42)
 
 parentDir <- "figures/greg_flow_data"
 
+# %%
 ################################################################################
 # A - heatmap of flow differences by disease and tissue
 # code is modified from @Greg
 ################################################################################
 dfLineageFilter <- readRDS(paste0(parentDir, "/rds/dfLineageFilter.rds"))
 
-MetaFactors <- c("HPAP Donor", "Disease Status", "Tissue", "cold_ischemia",
-  "Sex", "Age", "Staining_Flow_Researcher")
+MetaFactors <- c(
+  "HPAP Donor", "Disease Status", "Tissue", "cold_ischemia",
+  "Sex", "Age", "Staining_Flow_Researcher"
+)
 dfMetaCheck <- dfLineageFilter %>%
   dplyr::select(all_of(MetaFactors)) %>%
   filter(Tissue != "Spleen") %>%
@@ -55,18 +58,19 @@ dfcoldIsPops2 <- dfcoldIsCorrStats %>%
 coldIsPops2 <- dfcoldIsPops2$var1
 
 
-# @Greg showed that that cold ischemia time has an impact across disease state 
+# %%
+# @Greg showed that that cold ischemia time has an impact across disease state
 # on certain immune populations.
-# 
+#
 # To control for this, ANCOVA will be used to account for cold ischemia time.
-# Populations affected by cold ischemia are defined as having a significant p 
+# Populations affected by cold ischemia are defined as having a significant p
 # value and an R value >= 0.3 or <= -0.3.
-# 
-# These thresholds are used because using ANCOVA when a factor has a small 
+#
+# These thresholds are used because using ANCOVA when a factor has a small
 # effect can be detrimental, as over-correcting can lead to errant results.
 # For immune populations that are not significantly affected by cold ischemia,
 # robust ANOVA will be used.
-# 
+#
 # Robust ANOVA trims 10% of the values in the extremes, thus being less
 # sensitive to outliers and differences in variance than standard ANOVA.
 
@@ -81,77 +85,78 @@ ignorePops <- "(CD._Tn_CD127.CD27.|CD._Tn_CD27.|CD._Tn_CD127.|CD._Tnl_CD127\\+CD
 TissueSepAnovapops <- TissueSepAnovapops[!grepl(ignorePops, TissueSepAnovapops)]
 
 dfAllPopsFreqStatsANOVA <- dfAllPopsFreqStats %>%
-  pivot_longer(cols = 15:ncol(dfAllPopsFreqStats),
+  pivot_longer(
+    cols = 15:ncol(dfAllPopsFreqStats),
     names_to = "metric",
-    values_to = "value")
+    values_to = "value"
+  )
 alltissues <- unique(dfAllPopsFreqStats$Tissue)
 
-# tissues pooled by general anatomical location (pLN/mesLN/spleen) 
+# tissues pooled by general anatomical location (pLN/mesLN/spleen)
 LN_types <- unique(dfAllPopsFreqStatsANOVA$LN_type)
 
 # modified fx from @Greg
 run_ColisANOVA_withSubset <- function(
-  anovapops,
-  secondSubsetName,
-  secondSubsetValues,
-  df,
-  selectpops
-) {
+    anovapops,
+    secondSubsetName,
+    secondSubsetValues,
+    df,
+    selectpops) {
   allStats <- lapply(anovapops, function(x) {
     subsetStats <- lapply(secondSubsetValues, function(s) {
       message(paste0("testing: ", s, " and ", x))
-      
+
       dfAnova <- df %>%
         dplyr::filter(!!as.symbol(secondSubsetName) == s & metric == x) %>%
         mutate(Disease_Status = as_factor(Disease_Status))
-      
-        # message(paste0("Disease Status group is recorded in this order: ", paste0(levels(dfAnova$Disease_Status), collapse = " ")))
-      
+
+      # message(paste0("Disease Status group is recorded in this order: ", paste0(levels(dfAnova$Disease_Status), collapse = " ")))
+
       if (x %in% selectpops) {
         pval.aov <- glht(
-          aov(value ~ cold_ischemia + Disease_Status, data = dfAnova), 
-          linfct = mcp(`Disease_Status` = "Tukey"))
-        
+          aov(value ~ cold_ischemia + Disease_Status, data = dfAnova),
+          linfct = mcp(`Disease_Status` = "Tukey")
+        )
+
         tablepval <- summary(pval.aov)
-        
+
         comparisonOrder <- names(tablepval[[10]]$coefficients)
         comparisonOrder <- sapply(comparisonOrder, function(x) {
           tmp <- strsplit(x, " - ")[[1]]
           return(paste0(sort(tmp), collapse = "_"))
         })
-        
+
         tablepval <- tablepval[[10]]$pvalues
         testUsed <- "ancova"
-        
       } else {
         pval.aov <- lincon(value ~ Disease_Status, data = dfAnova, tr = 0.1)
         tablepval <- pval.aov[1]$comp
-        
+
         comp1 <- as.character(levels(dfAnova$Disease_Status)[tablepval[, 1]])
         comp2 <- as.character(levels(dfAnova$Disease_Status)[tablepval[, 2]])
         comparisonOrder <- sapply(seq_along(comp1), function(i) {
           return(paste0(sort(c(comp1[i], comp2[i])), collapse = "_"))
         })
-        
+
         tablepval <- tablepval[, 6]
-      
+
         testUsed <- "robust anova"
       }
-      
+
       statDf <- data.frame(
         immune_pop = x,
         secondSubset = s,
         pvalTest = testUsed
       )
-      
+
       statDf[, comparisonOrder] <- tablepval
-      
+
       return(statDf)
     })
-    
+
     return(bind_rows(subsetStats))
   })
-  
+
   return(bind_rows(allStats))
 }
 
@@ -183,7 +188,7 @@ pValSymnum <- function(x, showNs = TRUE) {
     if (is.na(y)) {
       return(NA)
     }
-    
+
     if (y < 0.001) {
       return("***")
     } else if (y >= 0.001 & y < 0.01) {
@@ -194,20 +199,23 @@ pValSymnum <- function(x, showNs = TRUE) {
       return(ifelse(showNs, "ns", ""))
     }
   })
-  
+
   return(tmp)
 }
+
+# %%
 
 dfsigPopsDisease <- dfDiseasePoolStats %>%
   rename(tissue = secondSubset) %>%
   mutate(immune_pop = str_replace_all(immune_pop, "_", " ")) %>%
   mutate(across(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")),
     .fns = list(pval = ~ pValSymnum(.)),
-    .names = "{fn}{col}")) %>%
+    .names = "{fn}{col}"
+  )) %>%
   filter_at(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")), all_vars(!is.na(.))) %>%
   filter(!if_all(all_of(c("AAb+_T1D", "ND_T1D", "AAb+_ND")), function(x) x > 0.05)) %>%
   filter(if_any(starts_with("pval"), ~ . == "**" | . == "***")) # requested by @Greg to filter only top sig rows
-  
+
 dfsigPopsSamples <- dfsigPopsDisease %>%
   dplyr::select(immune_pop, tissue) %>%
   filter(!grepl("CD127.CD27.", immune_pop)) %>% # for large heatmap, CD27 and CD127 will be separated for viewing ease
@@ -216,7 +224,7 @@ dfsigPopsSamples <- dfsigPopsDisease %>%
 dfsigPopsHeatmap <- dfNormTissuePop %>%
   group_by(metric, `Disease Status`, LN_type) %>%
   summarise(zMean = mean(z_score)) %>%
-  pivot_wider(names_from = `Disease Status`, values_from = zMean) %>% 
+  pivot_wider(names_from = `Disease Status`, values_from = zMean) %>%
   rename("immune_pop" = "metric") %>%
   rename("tissue" = "LN_type") %>%
   right_join(dfsigPopsSamples) %>%
@@ -235,7 +243,7 @@ dfsigPopsHeatmapPlot <- dfsigPopsHeatmap %>%
   dplyr::select(ND, `AAb+`, T1D) %>%
   as.matrix()
 
-col_fun_DiseaseHm <- colorRamp2(c(-0.75, 0, 0.75), c("blue", "white", "red")) 
+col_fun_DiseaseHm <- colorRamp2(c(-0.75, 0, 0.75), c("blue", "white", "red"))
 DiseaseAnn <- HeatmapAnnotation(
   `LNs` = dfsigPopsHeatmap$tissue,
   `NDAAb` = dfsigPopsHeatmap$`pvalAAb+_ND`,
@@ -244,44 +252,53 @@ DiseaseAnn <- HeatmapAnnotation(
   which = "row",
   col = list(
     `LNs` = COLORS$tissue,
-    `NDT1D` = COLORS$`pval-heatmap`, 
+    `NDT1D` = COLORS$`pval-heatmap`,
     `NDAAb` = COLORS$`pval-heatmap`,
-    `AAbT1D` = COLORS$`pval-heatmap`),
+    `AAbT1D` = COLORS$`pval-heatmap`
+  ),
   simple_anno_size = unit(0.1, "in"),
   show_annotation_name = TRUE,
   annotation_label = c(
     `LNs` = "Tissue",
-    `NDAAb` = "ND v AAb+", 
+    `NDAAb` = "ND v AAb+",
     `AAbT1D` = "AAb+ v T1D",
-    `NDT1D` = "ND v T1D"),
+    `NDT1D` = "ND v T1D"
+  ),
   annotation_name_side = "top",
   annotation_name_rot = 45,
   annotation_name_offset = unit(0.05, "in"),
   annotation_name_gp = gpar(fontsize = 6),
   gap = unit(c(0.1, 0, 0), "in"),
-  show_legend = c(`LNs` = TRUE, `NDAAb` = TRUE,
-    `AAbT1D` = FALSE, `NDT1D` = FALSE),
+  show_legend = c(
+    `LNs` = TRUE, `NDAAb` = TRUE,
+    `AAbT1D` = FALSE, `NDT1D` = FALSE
+  ),
   annotation_legend_param = list(
-    `LNs` = list(title = "Tissue",
+    `LNs` = list(
+      title = "Tissue",
       at = names(COLORS$tissue),
       labels = names(COLORS$tissue),
       title_position = "topcenter",
       grid_width = unit(0.1, "in"),
       grid_height = unit(0.1, "in"),
       labels_gp = gpar(fontsize = 6),
-      title_gp = gpar(fontsize = 6)),
+      title_gp = gpar(fontsize = 6)
+    ),
     `NDAAb` = list(
       title = "p-value",
       at = c("ns", "*", "**", "***"),
       labels = c("ns", "*", "**", "***"),
-      ncol = 2,
+      nrow = 2,
       title_position = "topcenter",
       grid_width = unit(0.1, "in"),
       grid_height = unit(0.1, "in"),
       labels_gp = gpar(fontsize = 6),
-      title_gp = gpar(fontsize = 6)) 
-  ))
+      title_gp = gpar(fontsize = 6)
+    )
+  )
+)
 
+# %% Fig A
 figA <- Heatmap(
   dfsigPopsHeatmapPlot,
   name = "Mean Z-score",
@@ -307,11 +324,12 @@ figA <- Heatmap(
     grid_height = unit(0.1, "in"),
     labels_gp = gpar(fontsize = 6),
     title_gp = gpar(fontsize = 6)
-  ))
+  )
+)
 
 
 ################################################################################
-# load seurat object for downstream...
+# %% load seurat object for downstream...
 ################################################################################
 
 wcgnaCheckpointFile <- "rds/postNetworkPostModule_pLN_ND_T1D_v3.rds"
@@ -324,9 +342,10 @@ seuWcgna <- tryCatch(
   error = function(cond) {
     message("Seurat object doesn't exist. Loading now.")
     tmp <- readRDS(wcgnaCheckpointFile)
-    
+
     return(tmp)
-})
+  }
+)
 
 # one of the clusters has an extra space so just removing it here
 seuWcgna$manualAnnot <- stringr::str_trim(seuWcgna$manualAnnot)
@@ -339,19 +358,20 @@ manualClusterOrder <- unique(seuWcgna$manualAnnot)
 sortedClust <- customSortAnnotation(manualClusterOrder)
 manualClusterOrder <- factor(manualClusterOrder,
   levels = sortedClust,
-  labels = sortedClust)
+  labels = sortedClust
+)
 
 
 ################################################################################
-# modules of interest
+# %% modules of interest
 ################################################################################
 
 # code taken and modified from PlotKMEs() in hdWGCNA
-modules <- GetModules(seuWcgna, seuWcgna@misc$active_wgcna) %>% 
-  filter(module != 'grey')
+modules <- GetModules(seuWcgna, seuWcgna@misc$active_wgcna) %>%
+  filter(module != "grey")
 
 mods <- levels(modules$module)
-mods <- mods[mods != 'grey']
+mods <- mods[mods != "grey"]
 
 mod_colors <- modules %>%
   filter(module %in% mods) %>%
@@ -359,28 +379,30 @@ mod_colors <- modules %>%
   distinct()
 
 n_hubs <- 10
-hub_df <- do.call(rbind, lapply(mods, function(cur_mod){
+hub_df <- do.call(rbind, lapply(mods, function(cur_mod) {
   print(cur_mod)
   cur <- subset(modules, module == cur_mod)
-  cur <- cur[,c('gene_name', 'module', paste0('kME_', cur_mod))]
-  names(cur)[3] <- 'kME'
+  cur <- cur[, c("gene_name", "module", paste0("kME_", cur_mod))]
+  names(cur)[3] <- "kME"
   cur <- dplyr::arrange(cur, kME)
-  top_genes <- cur %>% dplyr::top_n(n_hubs, wt=kME) %>% .$gene_name
+  top_genes <- cur %>%
+    dplyr::top_n(n_hubs, wt = kME) %>%
+    .$gene_name
   cur$lab <- ifelse(cur$gene_name %in% top_genes, cur$gene_name, "")
   cur
 }))
 
 
-mods_of_interest <- c(5,6,14)
+mods_of_interest <- c(5, 6, 14)
 mods_of_interest <- paste0("T1D-M", mods_of_interest)
 
 plot_list_kmes <- lapply(mods_of_interest, function(x) {
   cur_color <- subset(mod_colors, module == x) %>% .$color
   cur_df <- subset(hub_df, module == x)
-  top_genes <- cur_df %>% 
-    dplyr::top_n(n_hubs, wt=kME) %>% 
+  top_genes <- cur_df %>%
+    dplyr::top_n(n_hubs, wt = kME) %>%
     arrange(desc(kME))
-  
+
   p <- cur_df %>% ggplot(aes(x = reorder(gene_name, kME), y = kME)) +
     geom_point(size = 0.4, color = cur_color, fill = cur_color) +
     ggtitle(x) +
@@ -390,7 +412,7 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
       geom = "label",
       x = -Inf,
       y = Inf,
-      label = paste0(top_genes$gene_name, collapse="\n"),
+      label = paste0(top_genes$gene_name, collapse = "\n"),
       size = 4 / ggplot2:::.pt,
       hjust = 0,
       vjust = 1,
@@ -420,7 +442,7 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
 })
 
 ################################################################################
-# modules of interest heatmap
+# %% modules of interest heatmap
 ################################################################################
 seuWcgna <- ModuleTraitCorrelation(
   seuWcgna,
@@ -449,13 +471,13 @@ tmp <- Heatmap(
   column_names_gp = gpar(fontsize = 6, fontface = "plain"),
   row_gap = unit(5, "pt"),
   cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
-    fdrVal <- fdrMatrix[i,j]
+    fdrVal <- fdrMatrix[i, j]
     fdrText <- pValSymnum(fdrVal)
-    
-    if(fdrText == "ns") {
+
+    if (fdrText == "ns") {
       fdrText <- ""
     }
-    
+
     grid.text(fdrText, x, y, gp = gpar(fontsize = 6))
   },
   name = "Module Trait Correlation",
@@ -465,17 +487,18 @@ tmp <- Heatmap(
     title_position = "topcenter",
     grid_height = unit(0.1, "in"),
     labels_gp = gpar(fontsize = 6),
-    title_gp = gpar(fontsize = 6))
+    title_gp = gpar(fontsize = 6)
+  )
 )
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   patchwork::area(1, 1, 10, 4), # a
   patchwork::area(1, 5, 9, 6), # b dendrogram
-  patchwork::area(1, 7, 10, 11) # d correlation
+  patchwork::area(1, 7, 10, 11) # c correlation
 )
 
 p <- wrap_elements(full = grid.grabExpr(
@@ -485,7 +508,8 @@ p <- wrap_elements(full = grid.grabExpr(
     align_heatmap_legend = "global_center",
     background = "transparent",
     padding = unit(c(0, 0.75, 0.5, 0.5), "lines"),
-    merge_legend = TRUE)
+    merge_legend = TRUE
+  )
 ), clip = FALSE) +
   wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 3)) +
   wrap_elements(full = grid.grabExpr(
@@ -493,18 +517,20 @@ p <- wrap_elements(full = grid.grabExpr(
       heatmap_legend_side = "bottom",
       annotation_legend_side = "bottom",
       background = "transparent",
-      padding = unit(c(1, 3, 1, 4), "lines"))
-  ), clip = FALSE)  +
-  plot_annotation(tag_levels = list(LETTERS[1:3])) +
+      padding = unit(c(1, 3, 1, 4), "lines")
+    )
+  ), clip = FALSE) +
+  plot_annotation(tag_levels = list(letters[1:3])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "fig2_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 7.5,
-  gheight = 5)
+pdf(
+  file = "outs/pdf/fig2_v3_final.pdf",
+  width = 7.5,
+  height = 5,
+  family = "sans"
+)
+print(p)
+dev.off()
 
+# %%

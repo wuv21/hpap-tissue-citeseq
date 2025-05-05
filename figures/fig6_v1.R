@@ -18,7 +18,7 @@ library(grid)
 #################################################################################
 
 FLOW_RDS_PATH="./figures/greg_flow_data/rds/dfLineageFilter.rds"
-SC_RDS_PATH="/home/ubuntu/projmnt/betts/hpap/rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
+SC_RDS_PATH="rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
 set.seed(42)
 
 #################################################################################
@@ -71,7 +71,6 @@ figB = ggplot() +
 ################################################################################
 # %% Data prep for C-G
 ################################################################################
-
 COMPAREVAR="Disease_Status"
 ANNOTVAR="groupedAnnot"
 
@@ -93,7 +92,6 @@ totalnk = subset(so_pln_only, !!sym(ANNOTVAR) == "All NK Cells combined")
 #################################################################################
 # %% C - NK cells ranked bar plot
 ################################################################################
-
 compsout_nk_rna = findMarkersCombinatorial(subset(so_pln_only, groupedAnnot == "All NK Cells combined"), combVar = "Disease_Status", assay = "RNA")
 
 goirb = read.table("miscellaneous_gene_lists/NK_list_231025.csv", sep=",", header=TRUE)
@@ -106,14 +104,14 @@ sig_genes$pvalsymm = pValSymnum(sig_genes$p_val_adj_all)
 sig_genes
 compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),]
 fig6_de_stats = compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),c("gene", "avg_log2FC", "p_val_adj_all", "pct.1", "pct.2", "upregulated", "matchup")]
-fig6_de_stats
-write.table(fig6_de_stats, file="fig6_de_stats.csv", sep=",", quote=F, row.names=F)
+write.table(fig6_de_stats, file="outs/stats/fig6_de_stats.csv", sep=",", quote=F, row.names=F)
+
 # %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
   geom_bar(stat="identity", color = "black", lwd=0.15) +
   scale_fill_manual(values = COLORS[["pval-heatmap"]]) +
-  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.010, size = 0.75, hjust=0, family="sans", fontface="bold")+
-  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.010, size = 0.75, hjust=1, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC >= 0), aes(label=gene, x=gene, color=pvalsymm), y=0.005, size = 1.0, hjust=0, family="sans", fontface="bold")+
+  geom_text(data = subset(sig_genes, avg_log2FC < 0), aes(label=gene, x=gene, color=pvalsymm), y=-0.005, size = 1.0, hjust=1, family="sans", fontface="bold")+
   scale_color_manual(values=c("ns" = "black", "*" = "black", "**" = "black", "***" = "white")) +
   geom_hline(yintercept = 0, color = "black") +
   guides(color="none") +
@@ -144,6 +142,10 @@ figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
         legend.title = element_blank(),
         axis.line.y = element_blank()
   )
+  ylims = c(min(sig_genes$avg_log2FC-0.01),max(sig_genes$avg_log2FC)+0.01)
+  ylims
+  figC = figC +
+    scale_y_continuous(limits=ylims, expand=c(0,0))
 
 #################################################################################
 # %% D/E - NK cells violin/boxes
@@ -295,8 +297,8 @@ figF = ComplexHeatmap::Heatmap(
                         col = col_fun_DiseaseHm_down,
                         row_title_gp = gpar(fill = "black", col = "white", border = "black"),
                         row_names_side='left',
-                        row_names_gp = gpar(fontsize=4),
-                        column_names_gp = gpar(fontsize=4),
+                        row_names_gp = gpar(fontsize=3.5),
+                        column_names_gp = gpar(fontsize=3.5),
                         column_names_centered=TRUE,
                         show_heatmap_legend = TRUE,
                         column_order = c(2,1),
@@ -328,18 +330,9 @@ plot = wrap_elements(full=figA) + figB +
   wrap_elements(full=figC) + nkplts[[1]] + nkplts[[2]] +
   wrap_elements(full=figE) + wrap_elements(full=figF) +
   patchwork::plot_layout(design=fig6layout) +
-  patchwork::plot_annotation(tag_levels = list(LETTERS[1:7]))
+  patchwork::plot_annotation(tag_levels = list(letters[1:7])) &
+  plotTagTheme
 
-# %%
-source("figures/genericFigureSettings.R")
-saveFinalFigure(plot=plot,
-                # prefixDir = "figures/outs",
-                prefixDir = "/srv/http/betts/hpap/final_figures",
-                fn = "fig6_v2",
-                devices = c("Cairo"),
-                addTimestamp = FALSE,
-                gheight=5.50,
-                gwidth=3.75)
-
-# %%
-
+pdf("outs/pdf/fig6_v3_final.pdf", width=3.75, height=5.50, family="sans")
+print(plot)
+dev.off()

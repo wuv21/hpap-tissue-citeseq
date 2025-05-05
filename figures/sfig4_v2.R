@@ -1,5 +1,5 @@
-# note that this code is written to be run from the project base directory
-renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
+# %% note that this code is written to be run from the project base directory
+# renv::load("/data/hpap-citeseq/hpap-citeseq-analysis")
 
 source("figures/genericFigureSettings.R")
 source("scripts/dimPlots.R")
@@ -46,7 +46,7 @@ manualClusterOrder <- factor(manualClusterOrder,
 
 
 ################################################################################
-# S5A - other wcgna modules
+# %% S5A - other wcgna modules
 ################################################################################
 # code taken and modified from PlotKMEs() in hdWGCNA
 modules <- GetModules(seuWcgna, seuWcgna@misc$active_wgcna) %>% 
@@ -122,7 +122,7 @@ plot_list_kmes <- lapply(mods_of_interest, function(x) {
 })
 
 ################################################################################
-# S5B - other wcgna modules heatmaps
+# %% S5B - other wcgna modules heatmaps
 ################################################################################
 seuWcgna <- ModuleTraitCorrelation(
   seuWcgna,
@@ -172,7 +172,7 @@ tmp <- Heatmap(
 
 
 ################################################################################
-# Final layout and plot all
+# %% Final layout and plot all
 ################################################################################
 layout <- c(
   area(1, 1, 6, 12), #a
@@ -187,16 +187,21 @@ p <- wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 4)) +
       background = "transparent",
       padding = unit(c(1, 3, 1, 4), "lines"))
   ), clip = FALSE)  +
-  plot_annotation(tag_levels = list(LETTERS[1:2])) +
+  plot_annotation(tag_levels = list(letters[1:2])) +
   plot_layout(design = layout) &
   plotTagTheme
 
-saveFinalFigure(
-  plot = p,
-  prefixDir = "figures/outs",
-  fn = "sfig4_v3_final",
-  devices = c("pdf", "png"),
-  addTimestamp = TRUE,
-  gwidth = 8.5,
-  gheight = 11)
+pdf("outs/pdf/sfig4_v3_final.pdf", width=8.5, height=11, family="sans")
+print(p)
+dev.off()
 
+# %%
+# saveFinalFigure(
+#   plot = p,
+#   prefixDir = "figures/outs",
+#   fn = "sfig4_v3_final",
+#   devices = c("pdf", "png"),
+#   addTimestamp = TRUE,
+#   gwidth = 8.5,
+#   gheight = 11)
+#
