@@ -498,7 +498,7 @@ tmp <- Heatmap(
 layout <- c(
   patchwork::area(1, 1, 10, 4), # a
   patchwork::area(1, 5, 9, 6), # b dendrogram
-  patchwork::area(1, 7, 10, 11) # d correlation
+  patchwork::area(1, 7, 10, 11) # c correlation
 )
 
 p <- wrap_elements(full = grid.grabExpr(
@@ -525,21 +525,12 @@ p <- wrap_elements(full = grid.grabExpr(
   plotTagTheme
 
 pdf(
-  file = "/srv/http/betts/hpap/final_figures/amsesk/pdf/fig2_v3_final.pdf",
+  file = "outs/pdf/fig2_v3_final.pdf",
   width = 7.5,
   height = 5,
   family = "sans"
 )
 print(p)
 dev.off()
-
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "/srv/http/betts/hpap/final_figures",
-#   fn = "fig2_v3_final",
-#   devices = c("Cairo"),
-#   addTimestamp = TRUE,
-#   gwidth = 7.5,
-#   gheight = 5)
 
 # %%
