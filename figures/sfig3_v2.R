@@ -99,7 +99,7 @@ p <- wrap_elements(plot = figA) +
   plot_layout(design = layout) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig3_v3_final.pdf", width=11, height=13, family="sans")
+pdf("outs/pdf/sfig3_v3_final.pdf", width=11, height=13, family="sans")
 print(p)
 dev.off()
 

@@ -444,7 +444,7 @@ pvalues_out = do.call(bind_rows, pvalues) %>%
   arrange(figthing, matchup)
 
 pvalues_out
-write.table(pvalues_out, "/srv/http/betts/hpap/final_figures/amsesk/stats/fig4f_stats.csv", sep = ",", quote=FALSE, row.names=FALSE)
+write.table(pvalues_out, "outs/stats/fig4f_stats.csv", sep = ",", quote=FALSE, row.names=FALSE)
 
 ################################################################################
 # %% Final layout and plot all
@@ -481,7 +481,7 @@ p <- wrap_elements(plot = figA) +
   plotTagTheme
 
 pdf(
-  file = "/srv/http/betts/hpap/final_figures/amsesk/pdf/fig4_v3_final.pdf",
+  file = "outs/pdf/fig4_v3_final.pdf",
   width = 8,
   height = 6,
   family = "sans"
@@ -489,15 +489,4 @@ pdf(
 print(p)
 
 dev.off()
-
-# %%
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "figures/outs",
-#   fn = "fig4_v3_final",
-#   devices = c("pdf", "png"),
-#   addTimestamp = TRUE,
-#   gwidth = 8,
-#   gheight = 6)
-# %%
 

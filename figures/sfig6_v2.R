@@ -133,17 +133,7 @@ tmp <- lapply(tmp, function(x) {
 ################################################################################
 p <- wrap_elements(plot = wrap_plots(tmp, nrow = 3))
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig6_v3_final.pdf", width=8.5, height=7, family="sans")
+pdf("outs/pdf/sfig6_v3_final.pdf", width=8.5, height=7, family="sans")
 print(p)
 dev.off()
 
-# %%
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "figures/outs",
-#   fn = "sfig6_v3_final",
-#   devices = c("pdf", "png"),
-#   addTimestamp = TRUE,
-#   gwidth = 8.5,
-#   gheight = 7)
-#

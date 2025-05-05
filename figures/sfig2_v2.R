@@ -295,19 +295,8 @@ p <- wrap_elements(plot = LinPopsGraphs[[3]]) +
   plot_layout(design = layout) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig2_v3_final.pdf", width=8, height=6, family="sans")
+pdf("outs/pdf/sfig2_v3_final.pdf", width=8, height=6, family="sans")
 print(p)
 dev.off()
 
 # %%
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "figures/outs",
-#   fn = "sfig2_v3_final",
-#   devices = c("pdf", "png"),
-#   addTimestamp = TRUE,
-#   gwidth = 8,
-#   gheight = 6)
-#
-# # %%
-#

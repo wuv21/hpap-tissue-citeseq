@@ -193,7 +193,7 @@ treg_deg <- findMarkersCombinatorial(
   logfc.threshold	= 0,
   min.pct = 0.05,
 )
-write.csv(treg_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/fig3_treg_deg.csv", row.names = FALSE, quote = FALSE)
+write.csv(treg_deg, file = "outs/stats/fig3_treg_deg.csv", row.names = FALSE, quote = FALSE)
 
 treg_deg_stats <- treg_deg %>%
   mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
@@ -298,7 +298,7 @@ ggplot(scores, aes(x = PC1, y = PC2))+
 seu_pln_treg_foxp3 <- subset(seu_pln_treg, subset = FOXP3 > 0.5)
 foxp3_diseaseStatus_deg <- findMarkersCombinatorial(seu_pln_treg_foxp3, "Disease_Status")
 
-write.csv(foxp3_diseaseStatus_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/fig3_foxp3_diseaseStatus_deg.csv", row.names = FALSE, quote = FALSE)
+write.csv(foxp3_diseaseStatus_deg, file = "outs/stats/fig3_foxp3_diseaseStatus_deg.csv", row.names = FALSE, quote = FALSE)
 
 figE <- plotCombinatorialDEGLollipop(
   foxp3_diseaseStatus_deg %>% filter(!(gene %in% commonGenesByDisease$`ND`$gene) &
@@ -358,19 +358,6 @@ p <- wrap_elements(plot = figA) +
   plot_layout(design = layout) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig3_v3_final.pdf", width=6.5, height=6, family="sans")
+pdf("outs/pdf/fig3_v3_final.pdf", width=6.5, height=6, family="sans")
 print(p)
 dev.off()
-
-# %%
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "/srv/http/betts/hpap/final_figures",
-#   fn = "fig3_v3_final",
-#   devices = c("Cairo"),
-#   addTimestamp = TRUE,
-#   gwidth = 6.5,
-#   gheight = 6)
-  
-# %%
-

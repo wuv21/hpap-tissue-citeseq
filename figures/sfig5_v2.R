@@ -190,7 +190,7 @@ treg_mesln_deg <- findMarkersCombinatorial(
   min.pct = 0.05,
 )
 
-write.csv(treg_mesln_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_treg_mesln_deg.csv", row.names = FALSE, quote = FALSE)
+write.csv(treg_mesln_deg, file = "outs/stats/sfig5_treg_mesln_deg.csv", row.names = FALSE, quote = FALSE)
 
 
 treg_mesln_deg_stats <- treg_mesln_deg %>%
@@ -261,7 +261,7 @@ treg_spleen_deg <- findMarkersCombinatorial(
   min.pct = 0.05,
 )
 
-write.csv(treg_spleen_deg, file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_treg_spleen_deg.csv", row.names = FALSE, quote = FALSE)
+write.csv(treg_spleen_deg, file = "outs/stats/sfig5_treg_spleen_deg.csv", row.names = FALSE, quote = FALSE)
 
 treg_spleen_deg_stats <- treg_spleen_deg %>%
   mutate(matchup = factor(matchup, levels = c("ND_vs_AAb+", "T1D_vs_AAb+", "ND_vs_T1D"))) %>%
@@ -673,7 +673,7 @@ figP_deg = findMarkersCombinatorial(
 
 
 
-write.csv(bind_rows(figM_deg, figN_deg, figO_deg, figP_deg), file = "/srv/http/betts/hpap/final_figures/amsesk/stats/sfig5_MNOP_deg.csv", row.names = FALSE, quote = FALSE)
+write.csv(bind_rows(figM_deg, figN_deg, figO_deg, figP_deg), file = "outs/stats/sfig5_MNOP_deg.csv", row.names = FALSE, quote = FALSE)
 
 ################################################################################
 # %% Final layout and plot all

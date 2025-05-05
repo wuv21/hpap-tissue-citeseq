@@ -191,7 +191,7 @@ p <- wrap_elements(full = wrap_plots(plot_list_kmes, nrow = 4)) +
   plot_layout(design = layout) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/sfig4_v3_final.pdf", width=8.5, height=11, family="sans")
+pdf("outs/pdf/sfig4_v3_final.pdf", width=8.5, height=11, family="sans")
 print(p)
 dev.off()
 

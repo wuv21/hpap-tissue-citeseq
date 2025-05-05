@@ -23,7 +23,7 @@ renv::restore(lockfile = "renv.lock")
 
 1.  Download the processed RNA, ADT, and HTO files from GEO (or alternatively pre-process from the raw files available on GEO/SRA see below) using the series accession number: [GSE221787](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE221787). These files are placed in `../hpap-citeseq-data/rna`, `../hpap-citeseq-data/adt_v2`, `../hpap-citeseq-data/hto_v2` respectively.
 
-2.  Make the following directories: `./outs/rds`, `./rds`, and `matrixForDoubletScoring` which are not loaded in this repo due to size constraints.
+2.  Make the following directories: `./outs/rds`, `./outs/stats`, `./rds`, and `matrixForDoubletScoring` which are not loaded in this repo due to size constraints.
 
 3.  Run `main_merge.R` which will generate the necessary `.RData` image files and `.RDS` object files for figure generation.
 

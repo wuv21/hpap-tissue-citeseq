@@ -352,18 +352,6 @@ p <- wrap_elements(plot = HLAscoreDisease) +
   plot_layout(design = layout) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig7_v3_final.pdf", width=8, height=4, family="sans")
+pdf("outs/pdf/fig7_v3_final.pdf", width=8, height=4, family="sans")
 print(p)
 dev.off()
-
-# %%
-# saveFinalFigure(
-#   plot = p,
-#   prefixDir = "/srv/http/betts/hpap/final_figures",
-#   fn = "fig7_v3_final",
-#   devices = c("Cairo"),
-#   addTimestamp = FALSE,
-#   gwidth = 8,
-#   gheight = 4)
-# %%
-

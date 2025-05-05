@@ -18,7 +18,7 @@ library(grid)
 #################################################################################
 
 FLOW_RDS_PATH="./figures/greg_flow_data/rds/dfLineageFilter.rds"
-SC_RDS_PATH="/home/ubuntu/projmnt/betts/coculture/hpap/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
+SC_RDS_PATH="rds/seuMergedPostHSP_forFigures_2025-01-12_04-07-24.rds"
 set.seed(42)
 
 #################################################################################
@@ -104,8 +104,7 @@ sig_genes$pvalsymm = pValSymnum(sig_genes$p_val_adj_all)
 sig_genes
 compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),]
 fig6_de_stats = compsout_nk_rna[compsout_nk_rna$gene %in% c("GZMB", "KLRB1"),c("gene", "avg_log2FC", "p_val_adj_all", "pct.1", "pct.2", "upregulated", "matchup")]
-fig6_de_stats
-write.table(fig6_de_stats, file="/srv/http/betts/hpap/final_figures/amsesk/stats/fig6_de_stats.csv", sep=",", quote=F, row.names=F)
+write.table(fig6_de_stats, file="outs/stats/fig6_de_stats.csv", sep=",", quote=F, row.names=F)
 
 # %%
 figC = ggplot(data=sig_genes, aes(x=gene, y=avg_log2FC, fill=pvalsymm)) +
@@ -334,26 +333,6 @@ plot = wrap_elements(full=figA) + figB +
   patchwork::plot_annotation(tag_levels = list(letters[1:7])) &
   plotTagTheme
 
-pdf("/srv/http/betts/hpap/final_figures/amsesk/pdf/fig6_v3_final.pdf", width=3.75, height=5.50, family="sans")
+pdf("outs/pdf/fig6_v3_final.pdf", width=3.75, height=5.50, family="sans")
 print(plot)
 dev.off()
-
-ylims
-# %%
-# saveFinalFigure(plot=plot,
-#                 # prefixDir = "figures/outs",
-#                 prefixDir = "/srv/http/betts/hpap/final_figures",
-#                 fn = "fig6_v2",
-#                 devices = c("Cairo"),
-#                 addTimestamp = FALSE,
-#                 gheight=5.50,
-#                 gwidth=3.75)
-
-# %%
-pdf("/srv/http/betts/hpap/final_figures/dotty.pdf", width=8.5, height=8.5)
-p=Seurat::DotPlot(seu, features = c("NR4A1", "NR4A2", "BCL2", "FOS", "JUN"), assay="RNA", group.by = "manualAnnot")
-print(p)
-dev.off()
-
-# %%
-
